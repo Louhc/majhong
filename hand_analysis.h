@@ -92,15 +92,35 @@ bool isRyanpeikou(const std::vector<Tile> &hand, Tile drawnTile) {
 
     return sequenceCount == 2 && pairCount == 1;
 }
+bool isKokushiMusoJusanmen(const std::vector<Tile> &hand, Tile drawnTile) {
+    // Kokushi Musou (Thirteen Orphans) requires 13 unique terminal or honor tiles
+    if (hand.size() != 13) return false;
+    
+    TileCounts counts = getTileCounts(hand);
+    bool hasDrawnTile = false;
+    
+    // Check for the required tiles: 1m, 9m, 1p, 9p, 1s, 9s, and all honors
+    const Tile requiredTiles[] = {1, 9, 10, 18, 19, 27, 28, 29, 30, 31, 32, 33, 34};
+    for (Tile tile : requiredTiles) {
+        if (counts[tile - 1] == 0) return false;
+        if ( tile == drawnTile ) {
+            hasDrawnTile = true; // Drawn tile must be one of the required tiles
+        }
+    }
+    if (!hasDrawnTile) return false; // Drawn tile must be one of the required tiles
+    
+    return true;
+}
 bool isKokushiMuso(const std::vector<Tile> &hand, Tile drawnTile) {
     // Kokushi Musou (Thirteen Orphans) requires 13 unique terminal or honor tiles
     if (hand.size() != 13) return false;
+    // if (isKokushiMusoJusanmen(hand, drawnTile)) return false; // Jusanmen variant
     
     TileCounts counts = getTileCounts(hand, drawnTile);
     
     // Check for the required tiles: 1m, 9m, 1p, 9p, 1s, 9s, and all honors
-    const int requiredTiles[] = {1, 9, 10, 18, 19, 27, 28, 29, 30, 31, 32, 33, 34};
-    for (int tile : requiredTiles) {
+    const Tile requiredTiles[] = {1, 9, 10, 18, 19, 27, 28, 29, 30, 31, 32, 33, 34};
+    for (Tile tile : requiredTiles) {
         if (counts[tile - 1] == 0) return false;
     }
     
