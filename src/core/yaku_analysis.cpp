@@ -16,6 +16,111 @@ bool Hand::isTanyao(const Tile &draw) const{
     return true;
 }
 
+TileType getTileFromWind(const Wind &wind) {
+    switch (wind) {
+        case Wind::East: return EastWind;
+        case Wind::South: return SouthWind;
+        case Wind::West: return WestWind;
+        case Wind::North: return NorthWind;
+        default: return invalid_tile_type; // Invalid wind
+    }
+}
+
+bool Hand::isYakuhaiSelfWind(const Tile &draw) const{
+    TileCounts counts(getAllTileCounts());
+    assert(isValidTile(draw));
+    counts[getTileType(draw)]++;
+    
+    return counts[getTileFromWind(seat_wind)] >= 3;
+}
+
+bool Hand::isYakuhaiRoundWind(const Tile &draw) const{
+    TileCounts counts(getAllTileCounts());
+    assert(isValidTile(draw));
+    counts[getTileType(draw)]++;
+    
+    return counts[getTileFromWind(round_wind)] >= 3;
+}
+
+bool Hand::isYakuhaiHaku(const Tile &draw) const{
+    TileCounts counts(getAllTileCounts());
+    assert(isValidTile(draw));
+    counts[getTileType(draw)]++;
+    
+    return counts[Haku] >= 3;
+}
+
+bool Hand::isYakuhaiHatsu(const Tile &draw) const{
+    TileCounts counts(getAllTileCounts());
+    assert(isValidTile(draw));
+    counts[getTileType(draw)]++;
+    
+    return counts[Hatsu] >= 3;
+}
+
+bool Hand::isYakuhaiChun(const Tile &draw) const{
+    TileCounts counts(getAllTileCounts());
+    assert(isValidTile(draw));
+    counts[getTileType(draw)]++;
+    
+    return counts[Chun] >= 3;
+}
+
+// Uncomplete
+bool Hand::isPinfu(const Tile &draw) const{
+    if ( !isMenzen() ) return false; // Must be a closed hand
+
+    TileCounts counts(tile_counts);
+    assert(isValidTile(draw));
+    counts[getTileType(draw)]++;
+
+    if (counts[getTileFromWind(seat_wind)] > 0 || counts[getTileFromWind(round_wind)] > 0 ||
+        counts[Haku] > 0 || counts[Hatsu] > 0 || counts[Chun] > 0) {
+        return false; // Contains honor tiles
+    }
+
+    int sequences = 0; bool double_listen = false;
+    for (TileType tile : SeqBegun.list) {
+        if ( counts[tile] >= 1 ) {
+            if ( counts[tile + 1] < counts[tile] || counts[tile + 2] < counts[tile] ) {
+                if ( counts[tile] < 2 ) return false;
+                counts[tile] -= 2;
+                if ( counts[tile] == 0 ) continue;
+            }
+            if ( counts[tile + 1] >= counts[tile] && counts[tile + 2] >= counts[tile] ) {
+                sequences += counts[tile];
+                counts[tile + 1] -= counts[tile];
+                counts[tile + 2] -= counts[tile];
+                counts[tile] = 0;
+            } else {
+                return false; // Not a valid sequence
+            }
+        }
+    }
+
+    return sequences == 4 && counts[getTileType(draw)] == 1;
+}
+
+// Uncomplete
+bool Hand::isIipeikou(const Tile &draw) const{
+    if ( !isMenzen() ) return false;
+    TileCounts counts(tile_counts);
+    assert(isValidTile(draw));
+    counts[getTileType(draw)]++;
+
+    return false;
+
+    // int sequenceCount = 0;
+    // for (TileType tile : SeqBegun.list) {
+    //     if (counts[tile] >= 2 && counts[tile + 1] >= 2) {
+    //         sequenceCount++;
+    //         counts[tile] -= 2; counts[tile + 1] -= 2;
+    //     }
+    // }
+
+    // return sequenceCount == 1 && counts[getTileType(draw)] == 1;
+}
+
 bool Hand::isChiitoitsu(const Tile &draw) const{
     TileCounts counts(tile_counts);
     assert(isValidTile(draw));

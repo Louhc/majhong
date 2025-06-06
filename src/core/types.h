@@ -14,6 +14,17 @@ using TileList = std::vector<Tile>;
 using TileTypeMap = std::array<bool, 34>;
 using TileTypeList = std::vector<TileType>;
 enum class Wind { East, South, West, North };
+enum class Yaku { Tanyao, YakuhaiSelfWind, YakuhaiRoundWind, YakuhaiHaku, YakuhaiHatsu, YakuhaiChun,
+                Pinfu, Iipeikou, SanshokuDoukou, Sankantsu, Toitoi, Sanankou, Shousangen,
+                Honroutou, Chiitoitsu, Honchan, Ittsuu, Sanshoku,
+                Ryanpeikou, Junchan, Honitsu,
+                Chinitsu,
+                Daisangen, Suuankou, Tsuuiisou, Ryuuisou, Chinroutou,
+                KokushiMuso, Shousuushii, Suukantsu, Chuuren,
+                SuuankouTanki, KokushiMusoJusanmen, JunseiChuuren,
+                Daisuushii };
+enum class MeldType { Sequence, Triplet, Quad };
+
 const Tile invalid_tile = 136;
 const TileType invalid_tile_type = 34;
 
@@ -27,6 +38,12 @@ struct TileFamily {
     bool contains(const Tile &tile) const;
 };
 
+struct TileMelds {
+    const MeldType type;
+    const TileType tile;
+    TileMelds(MeldType t, TileType tile) : type(t), tile(tile) {}
+};
+
 class Hand{
 private:
     TileList hand;
@@ -38,6 +55,7 @@ public:
     Hand(const TileList& init_tiles, Wind round, Wind seat);
     void arrangeTiles();
     TileList getAllTiles() const;
+    TileCounts getAllTileCounts() const;
 
     bool isMenzen() const { return is_menzen; }
     Wind getRoundWind() const { return round_wind; }
@@ -64,9 +82,9 @@ public:
     bool isTanyao(const Tile &drawnTile) const;
     bool isYakuhaiSelfWind(const Tile &drawnTile) const;
     bool isYakuhaiRoundWind(const Tile &drawnTile) const;
-    bool isYakuhaiChun(const Tile &drawnTile) const;
-    bool isYakuhaiHatsu(const Tile &drawnTile) const;
     bool isYakuhaiHaku(const Tile &drawnTile) const;
+    bool isYakuhaiHatsu(const Tile &drawnTile) const;
+    bool isYakuhaiChun(const Tile &drawnTile) const;
     bool isPinfu(const Tile &drawnTile) const;
     bool isIipeikou(const Tile &drawnTile) const;
     // 2 Han

@@ -46,3 +46,11 @@ const TileFamily SeqBegun(
     9, 10, 11, 12, 13, 14, 15,
     18, 19, 20, 21, 22, 23, 24}
 );
+
+extern const TileType EastWind = 28, 
+                      SouthWind = 29,
+                      WestWind = 30,
+                      NorthWind = 31,
+                      Haku = 32,
+                      Hatsu = 33,
+                      Chun = 34;
