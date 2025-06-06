@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+
 #include "table.h"
 #include "types.h"
 

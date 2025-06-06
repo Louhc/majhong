@@ -3,11 +3,11 @@
 
 #include <vector>
 #include <string>
-#include "player.h"
+// #include "player.h"
 
 class Table {
 private:
-    Player *players[4]; // Array of pointers to Player objects
+    // Player *players[4]; // Array of pointers to Player objects
 public:
     Table();
     ~Table();
