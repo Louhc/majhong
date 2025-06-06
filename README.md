@@ -2,4 +2,4 @@
 
 ## TODO LIST
 
-- []  Yaku checking logic
+- [ ]  Yaku checking logic
