@@ -4,8 +4,7 @@
 #include <vector>
 #include <string>
 #include <array>
-
-#include "tiles.h"
+#include <cassert>
 
 using Tile = int; // 0-136
 using TileType = int; // 0-34
@@ -18,12 +17,7 @@ enum class Wind { East, South, West, North };
 const Tile invalid_tile = 136;
 const TileType invalid_tile_type = 34;
 
-TileTypeMap getTileTypeMap( const TileTypeList& list ) {
-    TileTypeMap map; map.fill(false);
-    for ( const TileType& tile_type : list ) 
-        map[tile_type] = true;
-    return map;
-}
+TileTypeMap getTileTypeMap( const TileTypeList& list );
 
 struct TileFamily {
     const int num;
@@ -52,13 +46,10 @@ public:
 
     bool isValid() const;
     int calcShanten() const;
-    bool isWinningHand(Tile drawnTile) const;
+    bool isWinningHand(const Tile &drawnTile) const;
     int calcHan() const;
 
-    bool hasTile(const Tile &tile) const{
-        assert(isValidTile(tile));
-        return tile_counts[getTileType(tile)] > 0;
-    }
+    bool hasTile(const Tile &tile) const;
     bool canChi(const Tile &call) const;
     bool canPon(const Tile &call) const;
     bool canKan(const Tile &call) const;
@@ -67,50 +58,50 @@ public:
     bool callPon(const Tile &call, const Tile &discard, int opt);
     bool callKan(const Tile &call);
     bool performAnkan(const Tile &tile, const Tile &draw);
-    bool drawAndDiscard(Tile draw, Tile discard);
-    
+    bool drawAndDiscard(const Tile &draw, const Tile &discard);
+
     // 1 Han
-    bool isTanyao(Tile drawnTile) const;
-    bool isYakuhaiSelfWind(Tile drawnTile) const;
-    bool isYakuhaiRoundWind(Tile drawnTile) const;
-    bool isYakuhaiChun(Tile drawnTile) const;
-    bool isYakuhaiHatsu(Tile drawnTile) const;
-    bool isYakuhaiHaku(Tile drawnTile) const;
-    bool isPinfu(Tile drawnTile) const;
-    bool isIipeikou(Tile drawnTile) const;
+    bool isTanyao(const Tile &drawnTile) const;
+    bool isYakuhaiSelfWind(const Tile &drawnTile) const;
+    bool isYakuhaiRoundWind(const Tile &drawnTile) const;
+    bool isYakuhaiChun(const Tile &drawnTile) const;
+    bool isYakuhaiHatsu(const Tile &drawnTile) const;
+    bool isYakuhaiHaku(const Tile &drawnTile) const;
+    bool isPinfu(const Tile &drawnTile) const;
+    bool isIipeikou(const Tile &drawnTile) const;
     // 2 Han
-    bool isSanshokuDoukou(Tile drawnTile) const;
-    bool isSankantsu(Tile drawnTile) const;
-    bool isToitoi(Tile drawnTile) const;
-    bool isSanankou(Tile drawnTile) const;
-    bool isShousangen(Tile drawnTile) const;
-    bool isHonroutou(Tile drawnTile) const;
-    bool isChiitoitsu(Tile drawnTile) const;
+    bool isSanshokuDoukou(const Tile &drawnTile) const;
+    bool isSankantsu(const Tile &drawnTile) const;
+    bool isToitoi(const Tile &drawnTile) const;
+    bool isSanankou(const Tile &drawnTile) const;
+    bool isShousangen(const Tile &drawnTile) const;
+    bool isHonroutou(const Tile &drawnTile) const;
+    bool isChiitoitsu(const Tile &drawnTile) const;
     // 2 Han, Fuuro -1
-    bool isHonchan(Tile drawnTile) const;
-    bool isIttsuu(Tile drawnTile) const;
-    bool isSanshoku(Tile drawnTile) const;
+    bool isHonchan(const Tile &drawnTile) const;
+    bool isIttsuu(const Tile &drawnTile) const;
+    bool isSanshoku(const Tile &drawnTile) const;
     // 3 Han
-    bool isRyanpeikou(Tile drawnTile) const;
-    bool isJunchan(Tile drawnTile) const;
-    bool isHonitsu(Tile drawnTile) const;
+    bool isRyanpeikou(const Tile &drawnTile) const;
+    bool isJunchan(const Tile &drawnTile) const;
+    bool isHonitsu(const Tile &drawnTile) const;
     // 6 Han, Fuuro -1
-    bool isChinitsu(Tile drawnTile) const;
+    bool isChinitsu(const Tile &drawnTile) const;
     // Yakuman
-    bool isDaisangen(Tile drawnTile) const;
-    bool isSuuankou(Tile drawnTile) const;
-    bool isTsuuiisou(Tile drawnTile) const;
-    bool isRyuuisou(Tile drawnTile) const;
-    bool isChinroutou(Tile drawnTile) const;
-    bool isKokushiMuso(Tile drawnTile) const;
-    bool isShousuushii(Tile drawnTile) const;
-    bool isSuukantsu(Tile drawnTile) const;
-    bool isChuuren(Tile drawnTile) const;
+    bool isDaisangen(const Tile &drawnTile) const;
+    bool isSuuankou(const Tile &drawnTile) const;
+    bool isTsuuiisou(const Tile &drawnTile) const;
+    bool isRyuuisou(const Tile &drawnTile) const;
+    bool isChinroutou(const Tile &drawnTile) const;
+    bool isKokushiMuso(const Tile &drawnTile) const;
+    bool isShousuushii(const Tile &drawnTile) const;
+    bool isSuukantsu(const Tile &drawnTile) const;
+    bool isChuuren(const Tile &drawnTile) const;
     // Double Yakuman
-    bool isSuuankouTanki(Tile drawnTile) const;
-    bool isKokushiMusoJusanmen(Tile drawnTile) const;
-    bool isJunseiChuuren(Tile drawnTile) const;
-    bool isDaisuushii(Tile drawnTile) const;
+    bool isSuuankouTanki(const Tile &drawnTile) const;
+    bool isKokushiMusoJusanmen(const Tile &drawnTile) const;
+    bool isJunseiChuuren(const Tile &drawnTile) const;
+    bool isDaisuushii(const Tile &drawnTile) const;
 };
 
 #endif // TYPES_H

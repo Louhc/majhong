@@ -3,7 +3,19 @@
 
 #include "types.h"
 #include "tiles.h"
-#include "utility.h"
+#include "utils.h"
+#include "constants.h"
+
+TileTypeMap getTileTypeMap( const TileTypeList& list ) {
+    TileTypeMap map; map.fill(false);
+    for ( const TileType& tile_type : list ) 
+        map[tile_type] = true;
+    return map;
+}
+
+bool TileFamily::contains(const Tile &tile) const{
+    return map[getTileType(tile)];
+}
 
 TileCounts getTileCounts(const TileList &hand) {
     TileCounts counts; counts.fill(0);
@@ -26,6 +38,11 @@ Hand::Hand(const TileList& init_tiles, Wind round, Wind seat){
 
 void Hand::arrangeTiles() {
     std::sort(hand.begin(), hand.end());
+}
+
+bool Hand::hasTile(const Tile &tile) const{
+    assert(isValidTile(tile));
+    return tile_counts[getTileType(tile)] > 0;
 }
 
 TileList Hand::getAllTiles() const{
