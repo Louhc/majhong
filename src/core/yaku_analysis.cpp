@@ -1,8 +1,67 @@
 #include <cassert>
+#include <algorithm>
 
 #include "types.h"
 #include "constants.h"
 #include "tiles.h"
+
+bool backtrackParse( TileCounts current_counts, TileMeldList current_melds,
+        HandParseResult& all_results, TileType draw, bool is_pair_found, int enumerator = 0 ){
+    int sum = 0;
+    for ( TileType tile : All.list )
+        sum += current_counts[tile];
+    if ( sum == 0 ){
+        all_results.push_back(current_melds);
+        return true;
+    }
+    bool flag = false;
+    for ( TileType tile : All.list ){
+        if ( current_counts[tile] == 0 ) continue;
+
+        // Check for sequences
+        if ( tile * 3 >= enumerator && SeqBegun.contains(tile) && current_counts[tile + 1] > 0 && current_counts[tile + 2] > 0 ){
+            current_counts[tile]--; current_counts[tile + 1]--; current_counts[tile + 2]--;
+            current_melds.push_back(TileMeld(MeldType::ClosedSequence, tile));
+            if ( backtrackParse(current_counts, current_melds, all_results, draw, is_pair_found, tile * 3) )
+                flag =  true;
+            current_melds.pop_back();
+            current_counts[tile]++; current_counts[tile + 1]++; current_counts[tile + 2]++;
+        }
+
+        // Check for pairs
+        if ( tile * 3 + 1 >= enumerator && !is_pair_found && current_counts[tile] >= 2 ){
+            current_counts[tile] -= 2;
+            current_melds.push_back(TileMeld(MeldType::Pair, tile));
+            std::swap(current_melds[0], current_melds.back());
+            if ( backtrackParse(current_counts, current_melds, all_results, draw, true, tile * 3 + 1) )
+                flag = true;
+            std::swap(current_melds[0], current_melds.back());
+            current_melds.pop_back();
+            current_counts[tile] += 2;
+        }
+
+        // Check for triplets
+        if ( tile * 3 + 2 >= enumerator && current_counts[tile] >= 3 ){
+            current_counts[tile] -= 3;
+            current_melds.push_back(TileMeld(MeldType::ClosedTriplet, tile));
+            if ( backtrackParse(current_counts, current_melds, all_results, draw, is_pair_found, tile * 3 + 2) )
+                flag = true;
+            current_melds.pop_back();
+            current_counts[tile] += 3;
+        }
+    }
+    return flag;
+}
+
+HandParseResult Hand::parseWinningHand(const Tile &draw){
+    HandParseResult res;
+    TileCounts counts(tile_counts);
+    assert(isValidTile(draw));
+    counts[getTileType(draw)]++;
+
+    backtrackParse(counts, {}, res, getTileType(draw), false);
+    return res;
+}
 
 bool Hand::isTanyao(const Tile &draw) const{
     TileCounts counts(tile_counts);

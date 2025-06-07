@@ -54,6 +54,15 @@ TileList Hand::getAllTiles() const{
     return all_tiles;
 }
 
+TileCounts Hand::getAllTileCounts() const{
+    TileCounts all_counts = tile_counts;
+    for ( const Tile &tile : chi ) all_counts[getTileType(tile)]++;
+    for ( const Tile &tile : pon ) all_counts[getTileType(tile)]++;
+    for ( const Tile &tile : kan ) all_counts[getTileType(tile)]++;
+    for ( const Tile &tile : ankan ) all_counts[getTileType(tile)]++;
+    return all_counts;
+}
+
 bool Hand::isValid() const {
     for (const auto& tile : getAllTiles()) if ( !isValidTile(tile) ) return false;
     

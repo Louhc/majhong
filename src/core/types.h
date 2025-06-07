@@ -23,7 +23,18 @@ enum class Yaku { Tanyao, YakuhaiSelfWind, YakuhaiRoundWind, YakuhaiHaku, Yakuha
                 KokushiMuso, Shousuushii, Suukantsu, Chuuren,
                 SuuankouTanki, KokushiMusoJusanmen, JunseiChuuren,
                 Daisuushii };
-enum class MeldType { Sequence, Triplet, Quad };
+using YakuList = std::vector<Yaku>;
+enum class MeldType {
+    Ankan,   // 暗杠
+    Minkan,  // 明杠 (大明杠)
+    Chakan,  // 加杠 (小明杠)
+    Chi,     // 吃 (明吃)
+    Pon,     // 碰 (明碰)
+    ClosedSequence, // 闭合顺子 (和牌时手牌中的顺子)
+    ClosedTriplet,  // 闭合刻子 (和牌时手牌中的刻子)
+    Pair     // 雀头
+};
+
 
 const Tile invalid_tile = 136;
 const TileType invalid_tile_type = 34;
@@ -38,11 +49,14 @@ struct TileFamily {
     bool contains(const Tile &tile) const;
 };
 
-struct TileMelds {
-    const MeldType type;
-    const TileType tile;
-    TileMelds(MeldType t, TileType tile) : type(t), tile(tile) {}
+struct TileMeld {
+    MeldType type;
+    TileType tile;
+    TileMeld(MeldType t, TileType tile) : type(t), tile(tile) {}
 };
+
+using TileMeldList = std::vector<TileMeld>;
+using HandParseResult = std::vector<TileMeldList>;
 
 class Hand{
 private:
@@ -63,6 +77,7 @@ public:
     TileCounts getTileCounts() const { return tile_counts; };
 
     bool isValid() const;
+    HandParseResult parseWinningHand(const Tile &draw);
     int calcShanten() const;
     bool isWinningHand(const Tile &drawnTile) const;
     int calcHan() const;

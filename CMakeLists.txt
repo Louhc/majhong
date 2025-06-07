@@ -15,6 +15,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)      # 禁用 GNU 扩展 保持代码更可移植�
 set(PROJECT_SOURCE_DIRS
     src/core
     src/game
+    src/display
 )
 
 # 添加所有头文件目录喵
@@ -33,6 +34,7 @@ set(MAIN_SOURCE ${MAIN_SOURCE_DIR}/main.cpp) # 假设主程序入口是 src/main
 file(GLOB_RECURSE GAME_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/game/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/display/*.cpp"
 )
 
 # 添加主程序的源文件到列表喵
