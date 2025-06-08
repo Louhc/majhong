@@ -53,7 +53,7 @@ bool backtrackParse( TileCounts current_counts, TileMeldList current_melds,
     return flag;
 }
 
-HandParseResult Hand::parseWinningHand(const Tile &draw){
+HandParseResult Hand::parseWinningHand(const Tile &draw) const{
     HandParseResult res;
     TileCounts counts(tile_counts);
     assert(isValidTile(draw));
@@ -61,6 +61,62 @@ HandParseResult Hand::parseWinningHand(const Tile &draw){
 
     backtrackParse(counts, {}, res, getTileType(draw), false);
     return res;
+}
+
+int calcHan( const YakuList &yaku_list, const bool &is_fuuro ){
+    int han = 0;
+    for ( const Yaku &yaku : yaku_list ){
+        switch (yaku) {
+            case Yaku::Tanyao: case Yaku::YakuhaiSelfWind: case Yaku::YakuhaiRoundWind: 
+            case Yaku::YakuhaiHaku: case Yaku::YakuhaiHatsu: case Yaku::YakuhaiChun: 
+            case Yaku::Pinfu: case Yaku::Iipeikou: han += 1; break;
+            
+            case Yaku::SanshokuDoukou: case Yaku::Sankantsu: case Yaku::Toitoi:
+            case Yaku::Sanankou: case Yaku::Shousangen: case Yaku::Honroutou:
+            case Yaku::Chiitoitsu: han += 2; break;
+            
+            case Yaku::Honchan: case Yaku::Ittsuu: case Yaku::Sanshoku: 
+                han += 2 - (is_fuuro ? 1 : 0); break;
+            
+            case Yaku::Ryanpeikou: case Yaku::Junchan: case Yaku::Honitsu:
+                han += 3; break;
+
+            case Yaku::Chinitsu: han += 6 - (is_fuuro ? 1 : 0); break;
+            
+            case Yaku::Daisangen: case Yaku::Suuankou: case Yaku::Tsuuiisou:
+            case Yaku::Ryuuisou: case Yaku::Chinroutou: case Yaku::KokushiMuso:
+            case Yaku::Shousuushii: case Yaku::Suukantsu: case Yaku::Chuuren:
+                han = 100; break;
+            
+            case Yaku::SuuankouTanki: case Yaku::KokushiMusoJusanmen: case Yaku::JunseiChuuren:
+            case Yaku::Daisuushii: han = 200; break;
+        }
+    }
+    return han;
+}
+
+// Uncomplete
+
+YakuList Hand::calcYaku(const Tile &draw) const{
+    YakuList yaku_list;
+    assert(isValidTile(draw));
+
+    HandParseResult parse_result = parseWinningHand(draw);
+    for ( TileMeldList &melds : parse_result ) {
+        YakuList meld_yaku;
+
+        if ( is_menzen ){
+            if ( melds[1].type == MeldType::ClosedSequence &&
+                 melds[2].type == MeldType::ClosedSequence &&
+                 melds[3].type == MeldType::ClosedSequence &&
+                 melds[4].type == MeldType::ClosedSequence ) {
+                meld_yaku.push_back(Yaku::Sankantsu);
+            }
+        }
+
+        int han = ::calcHan(meld_yaku, !is_menzen);
+    }
+    return yaku_list;
 }
 
 bool Hand::isTanyao(const Tile &draw) const{

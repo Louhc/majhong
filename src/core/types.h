@@ -24,6 +24,7 @@ enum class Yaku { Tanyao, YakuhaiSelfWind, YakuhaiRoundWind, YakuhaiHaku, Yakuha
                 SuuankouTanki, KokushiMusoJusanmen, JunseiChuuren,
                 Daisuushii };
 using YakuList = std::vector<Yaku>;
+
 enum class MeldType {
     Ankan,   // 暗杠
     Minkan,  // 明杠 (大明杠)
@@ -77,7 +78,8 @@ public:
     TileCounts getTileCounts() const { return tile_counts; };
 
     bool isValid() const;
-    HandParseResult parseWinningHand(const Tile &draw);
+    HandParseResult parseWinningHand(const Tile &draw) const;
+    YakuList calcYaku(const Tile &drawnTile) const;
     int calcShanten() const;
     bool isWinningHand(const Tile &drawnTile) const;
     int calcHan() const;
