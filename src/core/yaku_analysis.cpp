@@ -101,6 +101,8 @@ YakuList Hand::calcYaku(const Tile &draw) const{
     YakuList yaku_list;
     assert(isValidTile(draw));
 
+    bool is_tanyao = isTanyao(draw);
+
     HandParseResult parse_result = parseWinningHand(draw);
     for ( TileMeldList &melds : parse_result ) {
         YakuList meld_yaku;
@@ -109,9 +111,43 @@ YakuList Hand::calcYaku(const Tile &draw) const{
             if ( melds[1].type == MeldType::ClosedSequence &&
                  melds[2].type == MeldType::ClosedSequence &&
                  melds[3].type == MeldType::ClosedSequence &&
-                 melds[4].type == MeldType::ClosedSequence ) {
-                meld_yaku.push_back(Yaku::Sankantsu);
+                 melds[4].type == MeldType::ClosedSequence &&
+                 melds[0].tile != Haku && melds[0].tile != Hatsu && melds[0].tile != Chun &&
+                 melds[0].tile != getTileFromWind(seat_wind) && melds[0].tile != getTileFromWind(round_wind) ) {
+                meld_yaku.push_back(Yaku::Pinfu);
             }
+
+            if ( melds[1].type == MeldType::ClosedSequence &&
+                 melds[2].type == MeldType::ClosedSequence &&
+                 melds[3].type == MeldType::ClosedSequence &&
+                 melds[4].type == MeldType::ClosedSequence &&
+                 melds[1].tile == melds[2].tile && melds[3].tile == melds[4].tile ) {
+                meld_yaku.push_back(Yaku::Ryanpeikou);
+            } else {
+                for ( int i = 1; i + 1 < melds.size(); ++i ) {
+                    if ( melds[i].type == MeldType::ClosedSequence &&
+                         melds[i + 1].type == MeldType::ClosedSequence &&
+                         melds[i].tile == melds[i + 1].tile ) {
+                        meld_yaku.push_back(Yaku::Iipeikou);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if ( is_tanyao ) meld_yaku.push_back(Yaku::Tanyao);
+
+        for ( int i = 1; i < melds.size(); ++i ) {
+            if ( melds[i].tile == Haku )
+                meld_yaku.push_back(Yaku::YakuhaiHaku);
+            else if ( melds[i].tile == Hatsu )
+                meld_yaku.push_back(Yaku::YakuhaiHatsu);
+            else if ( melds[i].tile == Chun )
+                meld_yaku.push_back(Yaku::YakuhaiChun);
+            else if ( melds[i].tile == getTileFromWind(seat_wind) )
+                meld_yaku.push_back(Yaku::YakuhaiSelfWind);
+            else if ( melds[i].tile == getTileFromWind(round_wind) )
+                meld_yaku.push_back(Yaku::YakuhaiRoundWind);
         }
 
         int han = ::calcHan(meld_yaku, !is_menzen);
