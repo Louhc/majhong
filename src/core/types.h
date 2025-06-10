@@ -102,14 +102,14 @@ public:
     bool isYakuhaiHaku(const Tile &drawnTile) const;
     bool isYakuhaiHatsu(const Tile &drawnTile) const;
     bool isYakuhaiChun(const Tile &drawnTile) const;
-    bool isPinfu(const Tile &drawnTile) const;
-    bool isIipeikou(const Tile &drawnTile) const;
+    // bool isPinfu(const Tile &drawnTile) const;
+    // bool isIipeikou(const Tile &drawnTile) const;
     // 2 Han
     bool isSanshokuDoukou(const Tile &drawnTile) const;
     bool isSankantsu(const Tile &drawnTile) const;
     bool isToitoi(const Tile &drawnTile) const;
-    bool isSanankou(const Tile &drawnTile) const;
-    bool isShousangen(const Tile &drawnTile) const;
+    // bool isSanankou(const Tile &drawnTile) const;
+    // bool isShousangen(const Tile &drawnTile) const;
     bool isHonroutou(const Tile &drawnTile) const;
     bool isChiitoitsu(const Tile &drawnTile) const;
     // 2 Han, Fuuro -1
@@ -117,7 +117,7 @@ public:
     bool isIttsuu(const Tile &drawnTile) const;
     bool isSanshoku(const Tile &drawnTile) const;
     // 3 Han
-    bool isRyanpeikou(const Tile &drawnTile) const;
+    // bool isRyanpeikou(const Tile &drawnTile) const;
     bool isJunchan(const Tile &drawnTile) const;
     bool isHonitsu(const Tile &drawnTile) const;
     // 6 Han, Fuuro -1

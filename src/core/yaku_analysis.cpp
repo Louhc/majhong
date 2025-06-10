@@ -98,10 +98,16 @@ int calcHan( const YakuList &yaku_list, const bool &is_fuuro ){
 // Uncomplete
 
 YakuList Hand::calcYaku(const Tile &draw) const{
-    YakuList yaku_list;
+    YakuList yaku_list; int max_han = 0;
     assert(isValidTile(draw));
 
-    bool is_tanyao = isTanyao(draw);
+    bool is_tanyao = isTanyao(draw),
+         is_yakuhai_self_wind = isYakuhaiSelfWind(draw),
+         is_yakuhai_round_wind = isYakuhaiRoundWind(draw),
+         is_yakuhai_haku = isYakuhaiHaku(draw),
+         is_yakuhai_hatsu = isYakuhaiHatsu(draw),
+         is_yakuhai_chun = isYakuhaiChun(draw),
+         is_sankantsu = isSankantsu(draw);
 
     HandParseResult parse_result = parseWinningHand(draw);
     for ( TileMeldList &melds : parse_result ) {
@@ -136,21 +142,34 @@ YakuList Hand::calcYaku(const Tile &draw) const{
         }
 
         if ( is_tanyao ) meld_yaku.push_back(Yaku::Tanyao);
+        if ( is_yakuhai_self_wind ) meld_yaku.push_back(Yaku::YakuhaiSelfWind);
+        if ( is_yakuhai_round_wind ) meld_yaku.push_back(Yaku::YakuhaiRoundWind);
+        if ( is_yakuhai_haku ) meld_yaku.push_back(Yaku::YakuhaiHaku);
+        if ( is_yakuhai_hatsu ) meld_yaku.push_back(Yaku::YakuhaiHatsu);
+        if ( is_yakuhai_chun ) meld_yaku.push_back(Yaku::YakuhaiChun);
+        if ( is_sankantsu ) meld_yaku.push_back(Yaku::Sankantsu);
 
+        // SanshokuDoukou Uncomplete
+
+        int ankou_count = 0;
         for ( int i = 1; i < melds.size(); ++i ) {
-            if ( melds[i].tile == Haku )
-                meld_yaku.push_back(Yaku::YakuhaiHaku);
-            else if ( melds[i].tile == Hatsu )
-                meld_yaku.push_back(Yaku::YakuhaiHatsu);
-            else if ( melds[i].tile == Chun )
-                meld_yaku.push_back(Yaku::YakuhaiChun);
-            else if ( melds[i].tile == getTileFromWind(seat_wind) )
-                meld_yaku.push_back(Yaku::YakuhaiSelfWind);
-            else if ( melds[i].tile == getTileFromWind(round_wind) )
-                meld_yaku.push_back(Yaku::YakuhaiRoundWind);
+            if ( melds[i].type == MeldType::ClosedTriplet || melds[i].type == MeldType::Ankan ) {
+                ankou_count++;
+            }
+        }
+        if ( ankou_count >= 3 ) {
+            meld_yaku.push_back(Yaku::Sanankou);
+        }
+
+        if ( (is_yakuhai_chun ? 1 : 0) + (is_yakuhai_haku ? 1 : 0) +
+             (is_yakuhai_hatsu ? 1 : 0) >= 2 && Sangen.contains(melds[0].tile) ) {
+            meld_yaku.push_back(Yaku::Shousangen);
         }
 
         int han = ::calcHan(meld_yaku, !is_menzen);
+        if ( han > max_han ) {
+            max_han = han; yaku_list = meld_yaku;
+        }
     }
     return yaku_list;
 }
@@ -217,61 +236,6 @@ bool Hand::isYakuhaiChun(const Tile &draw) const{
     return counts[Chun] >= 3;
 }
 
-// Uncomplete
-bool Hand::isPinfu(const Tile &draw) const{
-    if ( !isMenzen() ) return false; // Must be a closed hand
-
-    TileCounts counts(tile_counts);
-    assert(isValidTile(draw));
-    counts[getTileType(draw)]++;
-
-    if (counts[getTileFromWind(seat_wind)] > 0 || counts[getTileFromWind(round_wind)] > 0 ||
-        counts[Haku] > 0 || counts[Hatsu] > 0 || counts[Chun] > 0) {
-        return false; // Contains honor tiles
-    }
-
-    int sequences = 0; bool double_listen = false;
-    for (TileType tile : SeqBegun.list) {
-        if ( counts[tile] >= 1 ) {
-            if ( counts[tile + 1] < counts[tile] || counts[tile + 2] < counts[tile] ) {
-                if ( counts[tile] < 2 ) return false;
-                counts[tile] -= 2;
-                if ( counts[tile] == 0 ) continue;
-            }
-            if ( counts[tile + 1] >= counts[tile] && counts[tile + 2] >= counts[tile] ) {
-                sequences += counts[tile];
-                counts[tile + 1] -= counts[tile];
-                counts[tile + 2] -= counts[tile];
-                counts[tile] = 0;
-            } else {
-                return false; // Not a valid sequence
-            }
-        }
-    }
-
-    return sequences == 4 && counts[getTileType(draw)] == 1;
-}
-
-// Uncomplete
-bool Hand::isIipeikou(const Tile &draw) const{
-    if ( !isMenzen() ) return false;
-    TileCounts counts(tile_counts);
-    assert(isValidTile(draw));
-    counts[getTileType(draw)]++;
-
-    return false;
-
-    // int sequenceCount = 0;
-    // for (TileType tile : SeqBegun.list) {
-    //     if (counts[tile] >= 2 && counts[tile + 1] >= 2) {
-    //         sequenceCount++;
-    //         counts[tile] -= 2; counts[tile + 1] -= 2;
-    //     }
-    // }
-
-    // return sequenceCount == 1 && counts[getTileType(draw)] == 1;
-}
-
 bool Hand::isChiitoitsu(const Tile &draw) const{
     TileCounts counts(tile_counts);
     assert(isValidTile(draw));
@@ -281,27 +245,6 @@ bool Hand::isChiitoitsu(const Tile &draw) const{
     for (TileType tile : All.list)
         if (counts[tile] >= 2) pairs++;
     return pairs == 7;
-}
-
-bool Hand::isRyanpeikou(const Tile &draw) const{
-    TileCounts counts(tile_counts);
-    assert(isValidTile(draw));
-    counts[getTileType(draw)]++;
-    
-    int sequenceCount = 0, pairCount = 0;
-    for ( TileType tile : SeqBegun.list ){
-        if ( counts[tile] >= 2 && counts[tile + 1] >= 2 && counts[tile + 2] >= 2 ) {
-            sequenceCount++; counts[tile] -= 2; counts[tile + 1] -= 2;
-            counts[tile + 2] -= 2;
-        }
-    }
-    for ( TileType tile : All.list ){
-        if ( counts[tile] >= 2 ) {
-            pairCount++;
-        }
-    }
-
-    return sequenceCount == 2 && pairCount == 1;
 }
 
 bool Hand::isKokushiMuso(const Tile &draw) const {
