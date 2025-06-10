@@ -101,13 +101,34 @@ YakuList Hand::calcYaku(const Tile &draw) const{
     YakuList yaku_list; int max_han = 0;
     assert(isValidTile(draw));
 
+    if ( isDaisangen(draw) ) yaku_list.push_back(Yaku::Daisangen);
+    if ( isSuuankou(draw) ) yaku_list.push_back(Yaku::Suuankou);
+    if ( isTsuuiisou(draw) ) yaku_list.push_back(Yaku::Tsuuiisou);
+    if ( isRyuuisou(draw) ) yaku_list.push_back(Yaku::Ryuuisou);
+    if ( isChinroutou(draw) ) yaku_list.push_back(Yaku::Chinroutou);
+    if ( isKokushiMusoJusanmen(draw) ) yaku_list.push_back(Yaku::KokushiMusoJusanmen);
+    else if ( isKokushiMuso(draw) ) yaku_list.push_back(Yaku::KokushiMuso);
+    if ( isDaisuushii(draw) ) yaku_list.push_back(Yaku::Daisuushii);
+    else if ( isShousuushii(draw) ) yaku_list.push_back(Yaku::Shousuushii);
+    if ( isSuukantsu(draw) ) yaku_list.push_back(Yaku::Suukantsu);
+    if ( isJunseiChuuren(draw) ) yaku_list.push_back(Yaku::JunseiChuuren);
+    else if ( isChuuren(draw) ) yaku_list.push_back(Yaku::Chuuren);
+    if ( isSuuankouTanki(draw) ) yaku_list.push_back(Yaku::SuuankouTanki);
+    
+    if ( yaku_list.size() > 0 ) { // if is yakuman
+        return yaku_list;
+    }
+
     bool is_tanyao = isTanyao(draw),
          is_yakuhai_self_wind = isYakuhaiSelfWind(draw),
          is_yakuhai_round_wind = isYakuhaiRoundWind(draw),
          is_yakuhai_haku = isYakuhaiHaku(draw),
          is_yakuhai_hatsu = isYakuhaiHatsu(draw),
          is_yakuhai_chun = isYakuhaiChun(draw),
-         is_sankantsu = isSankantsu(draw);
+         is_sankantsu = isSankantsu(draw),
+         is_honroutou = isHonroutou(draw),
+         is_honitsu = isHonitsu(draw),
+         is_chinitsu = isChinitsu(draw);
 
     HandParseResult parse_result = parseWinningHand(draw);
     for ( TileMeldList &melds : parse_result ) {
@@ -164,6 +185,12 @@ YakuList Hand::calcYaku(const Tile &draw) const{
         if ( (is_yakuhai_chun ? 1 : 0) + (is_yakuhai_haku ? 1 : 0) +
              (is_yakuhai_hatsu ? 1 : 0) >= 2 && Sangen.contains(melds[0].tile) ) {
             meld_yaku.push_back(Yaku::Shousangen);
+        }
+
+        if ( is_chinitsu ) {
+            meld_yaku.push_back(Yaku::Chinitsu);
+        } else if ( is_honitsu ) {
+            meld_yaku.push_back(Yaku::Honitsu);
         }
 
         int han = ::calcHan(meld_yaku, !is_menzen);

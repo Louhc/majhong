@@ -105,7 +105,7 @@ public:
     // bool isPinfu(const Tile &drawnTile) const;
     // bool isIipeikou(const Tile &drawnTile) const;
     // 2 Han
-    bool isSanshokuDoukou(const Tile &drawnTile) const;
+     bool isSanshokuDoukou(const Tile &drawnTile) const;
     bool isSankantsu(const Tile &drawnTile) const;
     bool isToitoi(const Tile &drawnTile) const;
     // bool isSanankou(const Tile &drawnTile) const;
@@ -113,12 +113,12 @@ public:
     bool isHonroutou(const Tile &drawnTile) const;
     bool isChiitoitsu(const Tile &drawnTile) const;
     // 2 Han, Fuuro -1
-    bool isHonchan(const Tile &drawnTile) const;
-    bool isIttsuu(const Tile &drawnTile) const;
+     bool isHonchan(const Tile &drawnTile) const;
+     bool isIttsuu(const Tile &drawnTile) const;
     bool isSanshoku(const Tile &drawnTile) const;
     // 3 Han
     // bool isRyanpeikou(const Tile &drawnTile) const;
-    bool isJunchan(const Tile &drawnTile) const;
+     bool isJunchan(const Tile &drawnTile) const;
     bool isHonitsu(const Tile &drawnTile) const;
     // 6 Han, Fuuro -1
     bool isChinitsu(const Tile &drawnTile) const;
