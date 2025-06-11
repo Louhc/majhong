@@ -162,16 +162,34 @@ YakuList Hand::calcYaku(const Tile &draw) const{
             }
         }
 
+        for ( int i = 0; i < chi.size(); i += 3 ) melds.push_back(TileMeld(MeldType::Chi, chi[i]));
+        for ( int i = 0; i < pon.size(); i += 3 ) melds.push_back(TileMeld(MeldType::Pon, pon[i]));
+        for ( int i = 0; i < kan.size(); i += 4 ) melds.push_back(TileMeld(MeldType::Minkan, kan[i]));
+        for ( int i = 0; i < ankan.size(); i += 4 ) melds.push_back(TileMeld(MeldType::Ankan, ankan[i]));
+
         if ( is_tanyao ) meld_yaku.push_back(Yaku::Tanyao);
         if ( is_yakuhai_self_wind ) meld_yaku.push_back(Yaku::YakuhaiSelfWind);
         if ( is_yakuhai_round_wind ) meld_yaku.push_back(Yaku::YakuhaiRoundWind);
         if ( is_yakuhai_haku ) meld_yaku.push_back(Yaku::YakuhaiHaku);
         if ( is_yakuhai_hatsu ) meld_yaku.push_back(Yaku::YakuhaiHatsu);
         if ( is_yakuhai_chun ) meld_yaku.push_back(Yaku::YakuhaiChun);
+// Sanshoku Doukou
+        std::vector<int> sanshoku_doukou_counts = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+        bool is_sanshoku_doukou = false;
+        for ( const TileMeld &meld : melds ) {
+            if ( meld.type == MeldType::ClosedTriplet || 
+                 meld.type == MeldType::Ankan ||
+                 meld.type == MeldType::Minkan ) {
+                sanshoku_doukou_counts[meld.tile % 9]++;
+                if ( sanshoku_doukou_counts[meld.tile % 9] >= 3 ) {
+                    is_sanshoku_doukou = true; break;
+                }
+            }
+        }
+        if ( is_sanshoku_doukou ) meld_yaku.push_back(Yaku::SanshokuDoukou);
+// Sankantsu
         if ( is_sankantsu ) meld_yaku.push_back(Yaku::Sankantsu);
-
-        // SanshokuDoukou Uncomplete
-
+// Sanankou
         int ankou_count = 0;
         for ( int i = 1; i < melds.size(); ++i ) {
             if ( melds[i].type == MeldType::ClosedTriplet || melds[i].type == MeldType::Ankan ) {
@@ -181,18 +199,49 @@ YakuList Hand::calcYaku(const Tile &draw) const{
         if ( ankou_count >= 3 ) {
             meld_yaku.push_back(Yaku::Sanankou);
         }
-
+// Shousangen
         if ( (is_yakuhai_chun ? 1 : 0) + (is_yakuhai_haku ? 1 : 0) +
              (is_yakuhai_hatsu ? 1 : 0) >= 2 && Sangen.contains(melds[0].tile) ) {
             meld_yaku.push_back(Yaku::Shousangen);
         }
-
+// Honchan & Junchan
+        bool is_honchan = true, is_junchan = true;
+        for ( const TileMeld &meld : melds ) {
+            if ( meld.type == MeldType::ClosedSequence ||
+                 meld.type == MeldType::Chi ) {
+                if ( !Yao.contains(meld.tile) && !Yao.contains(meld.tile + 2) ) {
+                    is_honchan = is_junchan = false;
+                }
+            } else {
+                if ( !Yao.contains(meld.tile) ) {
+                    is_honchan = false;
+                }
+                if ( !Routou.contains(meld.tile) ) {
+                    is_junchan = false;
+                }
+            }
+        }
+        if ( is_junchan ) meld_yaku.push_back(Yaku::Junchan);
+        else if ( is_honchan ) meld_yaku.push_back(Yaku::Honchan);
+// Ittsuu
+        std::vector<int> ittsuu_counts = {0, 0, 0};
+        for ( const TileMeld &meld : melds ) {
+            if ( meld.type == MeldType::ClosedSequence ||
+                 meld.type == MeldType::Chi && meld.tile % 3 == 0 ) {
+                ittsuu_counts[meld.tile / 9] |= 1 << (meld.tile % 9 / 3);
+            }
+        }
+        if ( ittsuu_counts[0] == 7 || ittsuu_counts[1] == 7 || ittsuu_counts[2] == 7 ) {
+            meld_yaku.push_back(Yaku::Ittsuu);
+        }
+// Honistu & Chinitsu
         if ( is_chinitsu ) {
             meld_yaku.push_back(Yaku::Chinitsu);
         } else if ( is_honitsu ) {
             meld_yaku.push_back(Yaku::Honitsu);
         }
-
+        
+// Compare with previous max
         int han = ::calcHan(meld_yaku, !is_menzen);
         if ( han > max_han ) {
             max_han = han; yaku_list = meld_yaku;
