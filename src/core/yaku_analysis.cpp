@@ -95,8 +95,6 @@ int calcHan( const YakuList &yaku_list, const bool &is_fuuro ){
     return han;
 }
 
-// Uncomplete
-
 YakuList Hand::calcYaku(const Tile &draw) const{
     YakuList yaku_list; int max_han = 0;
     assert(isValidTile(draw));
@@ -312,6 +310,23 @@ bool Hand::isYakuhaiChun(const Tile &draw) const{
     return counts[Chun] >= 3;
 }
 
+bool Hand::isSankantsu(const Tile &draw) const{
+    if ( kan.size() + ankan.size() >= 3 * 4 ){
+        return true;
+    }
+    return false;
+}
+
+bool Hand::isHonroutou(const Tile &draw) const{
+    TileList all(getAllTiles());
+    all.push_back(draw);
+    for ( const Tile &tile : all ){
+        if ( !Yao.contains(getTileType(tile)))
+            return false;
+    }
+    return true;
+}
+
 bool Hand::isChiitoitsu(const Tile &draw) const{
     TileCounts counts(tile_counts);
     assert(isValidTile(draw));
@@ -323,7 +338,78 @@ bool Hand::isChiitoitsu(const Tile &draw) const{
     return pairs == 7;
 }
 
-bool Hand::isKokushiMuso(const Tile &draw) const {
+bool Hand::isHonitsu(const Tile &draw) const{
+    TileTypeList all(getAllTiles()); all.push_back(draw);
+    int color = -1;
+    for ( const Tile &tile : all ){
+        if ( Honor.contains(getTileType(tile)) ) continue;
+        if ( color == -1 ) color = getTileType(tile) / 9;
+        else if ( color != getTileType(tile) / 9 ) return false;
+    }
+    return true;
+}
+
+bool Hand::isChinitsu(const Tile &draw) const{
+    TileTypeList all(getAllTiles()); all.push_back(draw);
+    int color = -1;
+    for ( const Tile &tile : all ){
+        if ( Honor.contains(getTileType(tile)) ) return false;
+        if ( color == -1 ) color = getTileType(tile) / 9;
+        else if ( color != getTileType(tile) / 9 ) return false;
+    }
+    return true;
+}
+
+bool Hand::isDaisangen(const Tile &draw) const{
+    TileCounts counts(getAllTileCounts());
+    counts[getTileType(draw)]++;
+    for ( const TileType &tile : Sangen.list ) {
+        if ( counts[tile] < 3 ) return false;
+    } return true;
+}
+
+// Unable to check if it's zimo
+bool Hand::isSuuankou(const Tile &draw) const{
+    if ( !is_menzen ) return false;
+    int ankou_counts = ankan.size() / 4, pair_counts = 0;
+    TileCounts counts(tile_counts);
+    counts[getTileType(draw)]++;
+    for ( const TileType &tile : All.list ){
+        if ( counts[tile] >= 3 ) ankou_counts++;
+        else if ( counts[tile] == 2 ) pair_counts++;
+    }
+    return ankou_counts == 4 && pair_counts == 1;
+}
+
+bool Hand::isTsuuiisou(const Tile &draw) const{
+    TileTypeList all(getAllTiles()); all.push_back(draw);
+    int color = -1;
+    for ( const Tile &tile : all ){
+        if ( !Honor.contains(getTileType(tile)) ) return false;
+    }
+    return true;
+}
+
+bool Hand::isRyuuisou(const Tile &draw) const{
+    TileTypeList all(getAllTiles()); all.push_back(draw);
+    int color = -1;
+    for ( const Tile &tile : all ){
+        if ( !GreenSuited.contains(getTileType(tile)) ) return false;
+    }
+    return true;
+}
+
+bool Hand::isChinroutou(const Tile &draw) const{
+    TileList all(getAllTiles());
+    all.push_back(draw);
+    for ( const Tile &tile : all ){
+        if ( !Routou.contains(getTileType(tile)))
+            return false;
+    }
+    return true;
+}
+
+bool Hand::isKokushiMuso(const Tile &draw) const{
     TileCounts counts(tile_counts);
     if ( isKokushiMusoJusanmen(draw) ) return false;
     counts[getTileType(draw)]++;
@@ -335,6 +421,29 @@ bool Hand::isKokushiMuso(const Tile &draw) const {
     return true;
 }
 
+bool Hand::isShousuushii(const Tile &draw) const{
+    TileCounts counts(getAllTileCounts());
+    counts[getTileType(draw)]++;
+    int pair_counts = 0, triplet_counts = 0;
+    for ( const TileType &tile : Kaze.list ) {
+        if ( counts[tile] == 2 ) pair_counts++;
+        if ( counts[tile] >= 3 ) triplet_counts++;
+    } return pair_counts <= 1 && triplet_counts >= 3;
+}
+
+bool Hand::isSuukantsu(const Tile &draw) const{
+    return kan.size() + ankan.size() >= 4 && getTileType(draw) == getTileType(hand[0]);
+}
+
+bool Hand::isChuuren(const Tile &draw) const{
+    // if ( !isChinitsu(draw) ) return false;
+    return false;
+}
+
+bool Hand::isSuuankouTanki(const Tile &draw) const{
+    return false;
+}
+
 bool Hand::isKokushiMusoJusanmen(const Tile &draw) const{
     TileCounts counts(tile_counts);
     assert(isValidTile(draw));
@@ -344,5 +453,18 @@ bool Hand::isKokushiMusoJusanmen(const Tile &draw) const{
         if (counts[tile] == 0) return false;
     }
     
+    return true;
+}
+
+bool Hand::isJunseiChuuren(const Tile &draw) const{
+    return false;
+}
+
+bool Hand::isDaisuushii(const Tile &draw) const{
+    TileCounts counts(getAllTileCounts());
+    counts[getTileType(draw)]++;
+    for ( const TileType &tile : Kaze.list ) {
+        if ( counts[tile] < 3 ) return false;
+    }
     return true;
 }

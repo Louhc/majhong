@@ -35,6 +35,11 @@ const TileFamily Sangen(
     {31, 32, 33}
 );
 
+const TileFamily Kaze(
+    4,
+    {27, 28, 29, 30}
+);
+
 const TileFamily Five(
     3,
     {4, 13, 22}
