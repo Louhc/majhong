@@ -175,9 +175,9 @@ YakuList Hand::calcYaku(const Tile &draw) const{
         std::vector<int> sanshoku_doukou_counts = {0, 0, 0, 0, 0, 0, 0, 0, 0};
         bool is_sanshoku_doukou = false;
         for ( const TileMeld &meld : melds ) {
-            if ( meld.type == MeldType::ClosedTriplet || 
-                 meld.type == MeldType::Ankan ||
-                 meld.type == MeldType::Minkan ) {
+            if ( meld.type != MeldType::Chi || 
+                 meld.type != MeldType::ClosedSequence ||
+                 meld.type != MeldType::Pair ) {
                 sanshoku_doukou_counts[meld.tile % 9]++;
                 if ( sanshoku_doukou_counts[meld.tile % 9] >= 3 ) {
                     is_sanshoku_doukou = true; break;
@@ -187,6 +187,15 @@ YakuList Hand::calcYaku(const Tile &draw) const{
         if ( is_sanshoku_doukou ) meld_yaku.push_back(Yaku::SanshokuDoukou);
 // Sankantsu
         if ( is_sankantsu ) meld_yaku.push_back(Yaku::Sankantsu);
+// Toitoi
+        bool is_toitoi = true;
+        for ( int i = 1; i < melds.size(); ++i ){
+            if ( melds[i].type == MeldType::Chi || melds[i].type == MeldType::ClosedSequence ){
+                is_toitoi = false;
+                break;
+            }
+        }
+        if ( is_toitoi ) meld_yaku.push_back(Yaku::Toitoi);
 // Sanankou
         int ankou_count = 0;
         for ( int i = 1; i < melds.size(); ++i ) {
@@ -232,6 +241,19 @@ YakuList Hand::calcYaku(const Tile &draw) const{
         if ( ittsuu_counts[0] == 7 || ittsuu_counts[1] == 7 || ittsuu_counts[2] == 7 ) {
             meld_yaku.push_back(Yaku::Ittsuu);
         }
+// Sanshoku
+        std::vector<int> sanshoku_counts = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+        bool is_sanshoku = false;
+        for ( const TileMeld &meld : melds ) {
+            if ( meld.type == MeldType::Chi || 
+                 meld.type == MeldType::ClosedSequence ) {
+                sanshoku_doukou_counts[meld.tile % 9] |= 1 << (meld.tile / 9);
+                if ( sanshoku_doukou_counts[meld.tile % 9] == 7 ) {
+                    is_sanshoku_doukou = true; break;
+                }
+            }
+        }
+        if ( is_sanshoku_doukou ) meld_yaku.push_back(Yaku::SanshokuDoukou);
 // Honistu & Chinitsu
         if ( is_chinitsu ) {
             meld_yaku.push_back(Yaku::Chinitsu);

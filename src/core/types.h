@@ -104,11 +104,9 @@ public:
     bool isYakuhaiChun(const Tile &draw) const;
     // 2 Han
     bool isSankantsu(const Tile &draw) const;
-     bool isToitoi(const Tile &draw) const;
     bool isHonroutou(const Tile &draw) const;
     bool isChiitoitsu(const Tile &draw) const;
     // 2 Han, Fuuro -1
-     bool isSanshoku(const Tile &draw) const;
     // 3 Han
     bool isHonitsu(const Tile &draw) const;
     // 6 Han, Fuuro -1
