@@ -14,6 +14,7 @@ private:
     TileList wall;
     int wall_pointer;
     int kan_counts;
+    bool is_started;
 
 public:
     Table();
@@ -21,7 +22,7 @@ public:
 
     int getPosition( const Player *who ) const;
 
-    void next_step();
+    void start();
 };
 
 #endif // TABLE_H

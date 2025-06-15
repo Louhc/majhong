@@ -7,10 +7,6 @@
 #include "table.h"
 #include "types.h"
 
-struct Action {
-    ;
-};
-
 class Player {
 private:
     Hand hand; // 1m-9m, 1p-9p, 1s-9s, 1z-7z
