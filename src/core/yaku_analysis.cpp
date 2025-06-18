@@ -6,23 +6,23 @@
 #include "tiles.h"
 
 bool backtrackParse( TileCounts current_counts, TileMeldList current_melds,
-        HandParseResult& all_results, TileType draw, bool is_pair_found, int enumerator = 0 ){
+        HandParseResult& all_results, bool is_pair_found, int enumerator = 0 ){
     int sum = 0;
-    for ( TileType tile : All.list )
+    for ( const Tile &tile : All.list )
         sum += current_counts[tile];
     if ( sum == 0 ){
         all_results.push_back(current_melds);
         return true;
     }
     bool flag = false;
-    for ( TileType tile : All.list ){
+    for ( const Tile &tile : All.list ){
         if ( current_counts[tile] == 0 ) continue;
 
         // Check for sequences
         if ( tile * 3 >= enumerator && SeqBegun.contains(tile) && current_counts[tile + 1] > 0 && current_counts[tile + 2] > 0 ){
             current_counts[tile]--; current_counts[tile + 1]--; current_counts[tile + 2]--;
             current_melds.push_back(TileMeld(MeldType::ClosedSequence, tile));
-            if ( backtrackParse(current_counts, current_melds, all_results, draw, is_pair_found, tile * 3) )
+            if ( backtrackParse(current_counts, current_melds, all_results, is_pair_found, tile * 3) )
                 flag =  true;
             current_melds.pop_back();
             current_counts[tile]++; current_counts[tile + 1]++; current_counts[tile + 2]++;
@@ -33,7 +33,7 @@ bool backtrackParse( TileCounts current_counts, TileMeldList current_melds,
             current_counts[tile] -= 2;
             current_melds.push_back(TileMeld(MeldType::Pair, tile));
             std::swap(current_melds[0], current_melds.back());
-            if ( backtrackParse(current_counts, current_melds, all_results, draw, true, tile * 3 + 1) )
+            if ( backtrackParse(current_counts, current_melds, all_results, true, tile * 3 + 1) )
                 flag = true;
             std::swap(current_melds[0], current_melds.back());
             current_melds.pop_back();
@@ -44,7 +44,7 @@ bool backtrackParse( TileCounts current_counts, TileMeldList current_melds,
         if ( tile * 3 + 2 >= enumerator && current_counts[tile] >= 3 ){
             current_counts[tile] -= 3;
             current_melds.push_back(TileMeld(MeldType::ClosedTriplet, tile));
-            if ( backtrackParse(current_counts, current_melds, all_results, draw, is_pair_found, tile * 3 + 2) )
+            if ( backtrackParse(current_counts, current_melds, all_results, is_pair_found, tile * 3 + 2) )
                 flag = true;
             current_melds.pop_back();
             current_counts[tile] += 3;
@@ -53,13 +53,11 @@ bool backtrackParse( TileCounts current_counts, TileMeldList current_melds,
     return flag;
 }
 
-HandParseResult Hand::parseWinningHand(const Tile &draw) const{
+HandParseResult Hand::parseWinningHand(const TileIndex &draw) const{
     HandParseResult res;
-    TileCounts counts(tile_counts);
-    assert(isValidTile(draw));
-    counts[getTileType(draw)]++;
+    TileCounts counts(tile_counts); counts[draw / 4]++;
 
-    backtrackParse(counts, {}, res, getTileType(draw), false);
+    backtrackParse(counts, {}, res, false);
     return res;
 }
 
@@ -95,9 +93,8 @@ int calcHan( const YakuList &yaku_list, const bool &is_fuuro ){
     return han;
 }
 
-YakuList Hand::calcYaku(const Tile &draw) const{
+YakuList Hand::calcYaku(const TileIndex &draw) const{
     YakuList yaku_list; int max_han = 0;
-    assert(isValidTile(draw));
 
     if ( isDaisangen(draw) ) yaku_list.push_back(Yaku::Daisangen);
     if ( isSuuankou(draw) ) yaku_list.push_back(Yaku::Suuankou);
@@ -114,6 +111,11 @@ YakuList Hand::calcYaku(const Tile &draw) const{
     if ( isSuuankouTanki(draw) ) yaku_list.push_back(Yaku::SuuankouTanki);
     
     if ( yaku_list.size() > 0 ) { // if is yakuman
+        return yaku_list;
+    }
+
+    if ( isChiitoitsu(draw) ){ // if is chiitoitsu
+        yaku_list.push_back(Yaku::Chiitoitsu);
         return yaku_list;
     }
 
@@ -160,10 +162,7 @@ YakuList Hand::calcYaku(const Tile &draw) const{
             }
         }
 
-        for ( int i = 0; i < chi.size(); i += 3 ) melds.push_back(TileMeld(MeldType::Chi, chi[i]));
-        for ( int i = 0; i < pon.size(); i += 3 ) melds.push_back(TileMeld(MeldType::Pon, pon[i]));
-        for ( int i = 0; i < kan.size(); i += 4 ) melds.push_back(TileMeld(MeldType::Minkan, kan[i]));
-        for ( int i = 0; i < ankan.size(); i += 4 ) melds.push_back(TileMeld(MeldType::Ankan, ankan[i]));
+        for ( int i = 0; i < open_melds.size(); ++i ) melds.push_back(open_melds[i]);
 
         if ( is_tanyao ) meld_yaku.push_back(Yaku::Tanyao);
         if ( is_yakuhai_self_wind ) meld_yaku.push_back(Yaku::YakuhaiSelfWind);
@@ -270,222 +269,238 @@ YakuList Hand::calcYaku(const Tile &draw) const{
     return yaku_list;
 }
 
-bool Hand::isTanyao(const Tile &draw) const{
-    TileCounts counts(tile_counts);
-    assert(isValidTile(draw));
-    counts[getTileType(draw)]++;
-
-    for ( TileType tile : Yao.list ){
-        if ( counts[tile] > 0) return false;
-    }
-    
+bool Hand::isTanyao(const TileIndex &draw) const{
+    if ( Yao.containsIdx(draw) ) return false;
+    for ( const Tile &tile : Yao.list )
+        if ( tile_counts[tile] > 0) return false;
     return true;
 }
 
-TileType getTileFromWind(const Wind &wind) {
+Tile getTileFromWind(const Wind &wind) {
     switch (wind) {
         case Wind::East: return EastWind;
         case Wind::South: return SouthWind;
         case Wind::West: return WestWind;
         case Wind::North: return NorthWind;
-        default: return invalid_tile_type; // Invalid wind
+        default: return invalid_tile; // Invalid wind
     }
 }
 
-bool Hand::isYakuhaiSelfWind(const Tile &draw) const{
+bool Hand::isYakuhaiSelfWind(const TileIndex &draw) const{
     TileCounts counts(getAllTileCounts());
-    assert(isValidTile(draw));
-    counts[getTileType(draw)]++;
-    
+    counts[draw / 4]++;
     return counts[getTileFromWind(seat_wind)] >= 3;
 }
 
-bool Hand::isYakuhaiRoundWind(const Tile &draw) const{
+bool Hand::isYakuhaiRoundWind(const TileIndex &draw) const{
     TileCounts counts(getAllTileCounts());
-    assert(isValidTile(draw));
-    counts[getTileType(draw)]++;
-    
+    counts[draw / 4]++;
     return counts[getTileFromWind(round_wind)] >= 3;
 }
 
-bool Hand::isYakuhaiHaku(const Tile &draw) const{
+bool Hand::isYakuhaiHaku(const TileIndex &draw) const{
     TileCounts counts(getAllTileCounts());
-    assert(isValidTile(draw));
-    counts[getTileType(draw)]++;
-    
+    counts[draw / 4]++;
     return counts[Haku] >= 3;
 }
 
-bool Hand::isYakuhaiHatsu(const Tile &draw) const{
+bool Hand::isYakuhaiHatsu(const TileIndex &draw) const{
     TileCounts counts(getAllTileCounts());
-    assert(isValidTile(draw));
-    counts[getTileType(draw)]++;
-    
+    counts[draw / 4]++;
     return counts[Hatsu] >= 3;
 }
 
-bool Hand::isYakuhaiChun(const Tile &draw) const{
+bool Hand::isYakuhaiChun(const TileIndex &draw) const{
     TileCounts counts(getAllTileCounts());
-    assert(isValidTile(draw));
-    counts[getTileType(draw)]++;
-    
+    counts[draw / 4]++;
     return counts[Chun] >= 3;
 }
 
-bool Hand::isSankantsu(const Tile &draw) const{
-    if ( kan.size() + ankan.size() >= 3 * 4 ){
-        return true;
-    }
-    return false;
+bool Hand::isSankantsu(const TileIndex &draw) const{
+    int num_kan = 0;
+    for ( const auto &meld : open_melds )
+        if ( meld.type == MeldType::Ankan || meld.type == MeldType::Minkan || meld.type == MeldType::Chakan )
+            ++num_kan;
+    return num_kan >= 3;
 }
 
-bool Hand::isHonroutou(const Tile &draw) const{
-    TileList all(getAllTiles());
+bool Hand::isHonroutou(const TileIndex &draw) const{
+    TileIndexList all(getAllTiles());
     all.push_back(draw);
-    for ( const Tile &tile : all ){
-        if ( !Yao.contains(getTileType(tile)))
+    for ( const TileIndex &tile_index : all ){
+        if ( !Yao.containsIdx(tile_index) )
             return false;
     }
     return true;
 }
 
-bool Hand::isChiitoitsu(const Tile &draw) const{
+bool Hand::isChiitoitsu(const TileIndex &draw) const{
+    if ( !is_menzen ) return false;
+
     TileCounts counts(tile_counts);
-    assert(isValidTile(draw));
-    counts[getTileType(draw)]++;
+    counts[draw / 4]++;
 
-    int pairs = 0;
-    for (TileType tile : All.list)
-        if (counts[tile] >= 2) pairs++;
-    return pairs == 7;
+    int num_pair = 0;
+    for ( const Tile &tile : All.list ){
+        if ( counts[tile] == 2 ) num_pair++;
+    }
+    return num_pair == 7;
 }
 
-bool Hand::isHonitsu(const Tile &draw) const{
-    TileTypeList all(getAllTiles()); all.push_back(draw);
+bool Hand::isHonitsu(const TileIndex &draw) const{
+    TileIndexList all(getAllTiles()); all.push_back(draw);
     int color = -1;
-    for ( const Tile &tile : all ){
-        if ( Honor.contains(getTileType(tile)) ) continue;
-        if ( color == -1 ) color = getTileType(tile) / 9;
-        else if ( color != getTileType(tile) / 9 ) return false;
+    for ( const TileIndex &tile_index : all ){
+        if ( Honor.containsIdx(tile_index) ) continue;
+        if ( color == -1 ) color = tile_index / 4 / 9;
+        else if ( color != tile_index / 4 / 9 ) return false;
     }
     return true;
 }
 
-bool Hand::isChinitsu(const Tile &draw) const{
-    TileTypeList all(getAllTiles()); all.push_back(draw);
+bool Hand::isChinitsu(const TileIndex &draw) const{
+    TileIndexList all(getAllTiles()); all.push_back(draw);
     int color = -1;
-    for ( const Tile &tile : all ){
-        if ( Honor.contains(getTileType(tile)) ) return false;
-        if ( color == -1 ) color = getTileType(tile) / 9;
-        else if ( color != getTileType(tile) / 9 ) return false;
+    for ( const TileIndex &tile_index : all ){
+        if ( Honor.containsIdx(tile_index) ) return false;
+        if ( color == -1 ) color = tile_index / 4 / 9;
+        else if ( color != tile_index / 4 / 9 ) return false;
     }
     return true;
 }
 
-bool Hand::isDaisangen(const Tile &draw) const{
-    TileCounts counts(getAllTileCounts());
-    counts[getTileType(draw)]++;
-    for ( const TileType &tile : Sangen.list ) {
+bool Hand::isDaisangen(const TileIndex &draw) const{
+    TileCounts counts(getAllTileCounts()); counts[draw / 4]++;
+    for ( const Tile &tile : Sangen.list ) {
         if ( counts[tile] < 3 ) return false;
     } return true;
 }
 
 // Unable to check if it's zimo
-bool Hand::isSuuankou(const Tile &draw) const{
+bool Hand::isSuuankou(const TileIndex &draw) const{
     if ( !is_menzen ) return false;
-    int ankou_counts = ankan.size() / 4, pair_counts = 0;
+    int ankou_num = 0, pair_num = 0;
+    for ( int i = 0; i < open_melds.size(); ++i )
+        if ( open_melds[i].type == MeldType::Ankan )
+            ++ankou_num;
+
     TileCounts counts(tile_counts);
-    counts[getTileType(draw)]++;
-    for ( const TileType &tile : All.list ){
-        if ( counts[tile] >= 3 ) ankou_counts++;
-        else if ( counts[tile] == 2 ) pair_counts++;
+    counts[draw / 4]++;
+    for ( const Tile &tile : All.list ){
+        if ( counts[tile] >= 3 ) ankou_num++;
+        else if ( counts[tile] == 2 ) pair_num++;
     }
-    return ankou_counts == 4 && pair_counts == 1;
+
+    return ankou_num == 4 && pair_num == 1;
 }
 
-bool Hand::isTsuuiisou(const Tile &draw) const{
-    TileTypeList all(getAllTiles()); all.push_back(draw);
-    int color = -1;
-    for ( const Tile &tile : all ){
-        if ( !Honor.contains(getTileType(tile)) ) return false;
-    }
-    return true;
-}
-
-bool Hand::isRyuuisou(const Tile &draw) const{
-    TileTypeList all(getAllTiles()); all.push_back(draw);
-    int color = -1;
-    for ( const Tile &tile : all ){
-        if ( !GreenSuited.contains(getTileType(tile)) ) return false;
+bool Hand::isTsuuiisou(const TileIndex &draw) const{
+    TileIndexList all(getAllTiles()); all.push_back(draw);
+    for ( const TileIndex &tile_index : all ){
+        if ( !Honor.contains(tile_index / 4) ) return false;
     }
     return true;
 }
 
-bool Hand::isChinroutou(const Tile &draw) const{
-    TileList all(getAllTiles());
-    all.push_back(draw);
-    for ( const Tile &tile : all ){
-        if ( !Routou.contains(getTileType(tile)))
+bool Hand::isRyuuisou(const TileIndex &draw) const{
+    TileIndexList all(getAllTiles()); all.push_back(draw);
+    for ( const TileIndex &tile_index : all ){
+        if ( !GreenSuited.contains(tile_index / 4) ) return false;
+    }
+    return true;
+}
+
+bool Hand::isChinroutou(const TileIndex &draw) const{
+    TileIndexList all(getAllTiles()); all.push_back(draw);
+    for ( const TileIndex &tile_index : all )
+        if ( !Routou.contains(tile_index / 4) )
             return false;
-    }
     return true;
 }
 
-bool Hand::isKokushiMuso(const Tile &draw) const{
-    TileCounts counts(tile_counts);
-    if ( isKokushiMusoJusanmen(draw) ) return false;
-    counts[getTileType(draw)]++;
+bool Hand::isKokushiMuso(const TileIndex &draw) const{
+    TileCounts counts(tile_counts); counts[draw / 4]++;
 
-    for (TileType tile : Yao.list) {
+    for (const Tile &tile : Yao.list) {
         if (counts[tile] == 0) return false;
     }
     
     return true;
 }
 
-bool Hand::isShousuushii(const Tile &draw) const{
-    TileCounts counts(getAllTileCounts());
-    counts[getTileType(draw)]++;
-    int pair_counts = 0, triplet_counts = 0;
-    for ( const TileType &tile : Kaze.list ) {
-        if ( counts[tile] == 2 ) pair_counts++;
-        if ( counts[tile] >= 3 ) triplet_counts++;
-    } return pair_counts <= 1 && triplet_counts >= 3;
+bool Hand::isShousuushii(const TileIndex &draw) const{
+    TileCounts counts(getAllTileCounts()); counts[draw / 4]++;
+    int pair_num = 0, triplet_num = 0;
+    for ( const Tile &tile : Kaze.list ) {
+        if ( counts[tile] == 2 ) pair_num++;
+        if ( counts[tile] >= 3 ) triplet_num++;
+    } 
+    
+    return pair_num == 1 && triplet_num == 3;
 }
 
 bool Hand::isSuukantsu(const Tile &draw) const{
-    return kan.size() + ankan.size() >= 4 && getTileType(draw) == getTileType(hand[0]);
+    if ( draw / 4 != hand[0] / 4 ) return false;
+    int num_kan = 0;
+    for ( int i = 0; i < open_melds.size(); ++i )
+        if ( open_melds[i].type == MeldType::Ankan || open_melds[i].type == MeldType::Minkan || open_melds[i].type == MeldType::Chakan )
+            ++num_kan;
+    return num_kan == 4;
 }
 
-bool Hand::isChuuren(const Tile &draw) const{
-    // if ( !isChinitsu(draw) ) return false;
-    return false;
+bool Hand::isChuuren(const TileIndex &draw) const{
+    if ( !isChinitsu(draw) || !is_menzen ) return false;
+    int start = draw / 4 / 9 * 9;
+    TileCounts counts(getAllTileCounts()); counts[draw / 4]++;
+    if ( counts[start] < 3 || counts[start + 8] < 3 )
+        return false;
+    for ( int i = 1; i < 8; ++i )
+        if ( counts[start + i] < 1 )
+            return false;
+    return true;
 }
 
-bool Hand::isSuuankouTanki(const Tile &draw) const{
-    return false;
-}
+bool Hand::isSuuankouTanki(const TileIndex &draw) const{
+    if ( !is_menzen ) return false;
+    int ankou_num = 0, pair_num = 0;
+    for ( int i = 0; i < open_melds.size(); ++i )
+        if ( open_melds[i].type == MeldType::Ankan )
+            ++ankou_num;
 
-bool Hand::isKokushiMusoJusanmen(const Tile &draw) const{
     TileCounts counts(tile_counts);
-    assert(isValidTile(draw));
-    if ( !Yao.contains(draw) ) return false;
-    
-    for (TileType tile : Yao.list) {
+    for ( const Tile &tile : All.list ){
+        if ( counts[tile] >= 3 ) ankou_num++;
+        else if ( counts[tile] == 1 && tile == draw / 4 ) pair_num++;
+    }
+
+    return ankou_num == 4 && pair_num == 1;
+}
+
+bool Hand::isKokushiMusoJusanmen(const TileIndex &draw) const{
+    TileCounts counts(tile_counts);
+    if ( !Yao.contains(draw) ) return false; 
+    for (const Tile &tile : Yao.list) {
         if (counts[tile] == 0) return false;
     }
     
     return true;
 }
 
-bool Hand::isJunseiChuuren(const Tile &draw) const{
-    return false;
+bool Hand::isJunseiChuuren(const TileIndex &draw) const{
+    if ( !isChinitsu(draw) || !is_menzen ) return false;
+    int start = draw / 4 / 9 * 9;
+    TileCounts counts(getAllTileCounts());
+    if ( counts[start] < 3 || counts[start + 8] < 3 )
+        return false;
+    for ( int i = 1; i < 8; ++i )
+        if ( counts[start + i] < 1 )
+            return false;
+    return true;
 }
 
-bool Hand::isDaisuushii(const Tile &draw) const{
-    TileCounts counts(getAllTileCounts());
-    counts[getTileType(draw)]++;
-    for ( const TileType &tile : Kaze.list ) {
+bool Hand::isDaisuushii(const TileIndex &draw) const{
+    TileCounts counts(getAllTileCounts()); counts[draw / 4]++;
+    for ( const Tile &tile : Kaze.list ) {
         if ( counts[tile] < 3 ) return false;
     }
     return true;
