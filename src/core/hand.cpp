@@ -6,139 +6,176 @@
 #include "utils.h"
 #include "constants.h"
 
-TileTypeMap getTileTypeMap( const TileTypeList& list ) {
-    TileTypeMap map; map.fill(false);
-    for ( const TileType& tile_type : list ) 
-        map[tile_type] = true;
-    return map;
-}
-
-bool TileFamily::contains(const Tile &tile) const{
-    return map[getTileType(tile)];
-}
-
-TileCounts getTileCounts(const TileList &hand) {
+TileCounts getTileCounts(const TileIndexList &hand) {
     TileCounts counts; counts.fill(0);
-    for (Tile tile : hand)
-        counts[getTileType(tile)]++;
+    for (TileIndex tile_index : hand)
+        counts[tile_index / 4]++;
     return counts;
 }
 
-Hand::Hand(const TileList& init_tiles, Wind round, Wind seat){
+Hand::Hand(const TileIndexList& init_tiles, Wind round, Wind seat){
     assert(init_tiles.size() == 13);
-    for ( const Tile &tile : init_tiles ) assert(isValidTile(tile));
+    // for ( const TileIndex &tile_index : init_tiles ) 
+    //     assert(tile_index >= 0 && tile_index < 136);
     hand = TileList(init_tiles);
+    open_melds.clear();
     round_wind = round;
     seat_wind = seat;
-    is_menzen = true;
     tile_counts = ::getTileCounts(init_tiles);
-    arrangeTiles();
-    assert(isValid());
+    is_menzen = 1; is_richii = 0;
 }
 
 void Hand::arrangeTiles() {
     std::sort(hand.begin(), hand.end());
 }
 
-bool Hand::hasTile(const Tile &tile) const{
-    assert(isValidTile(tile));
-    return tile_counts[getTileType(tile)] > 0;
-}
-
 TileList Hand::getAllTiles() const{
     TileList all_tiles = hand;
-    all_tiles.insert(all_tiles.end(), chi.begin(), chi.end());
-    all_tiles.insert(all_tiles.end(), pon.begin(), pon.end());
-    all_tiles.insert(all_tiles.end(), kan.begin(), kan.end());
-    all_tiles.insert(all_tiles.end(), ankan.begin(), ankan.end());
+    all_tiles.insert(all_tiles.end(), open.begin(), open.end());
     return all_tiles;
 }
 
 TileCounts Hand::getAllTileCounts() const{
     TileCounts all_counts = tile_counts;
-    for ( const Tile &tile : chi ) all_counts[getTileType(tile)]++;
-    for ( const Tile &tile : pon ) all_counts[getTileType(tile)]++;
-    for ( const Tile &tile : kan ) all_counts[getTileType(tile)]++;
-    for ( const Tile &tile : ankan ) all_counts[getTileType(tile)]++;
+    for ( const Tile &tile : open ) all_counts[tile / 4]++;
     return all_counts;
 }
 
-bool Hand::isValid() const {
-    for (const auto& tile : getAllTiles()) if ( !isValidTile(tile) ) return false;
-    
-    if ( chi.size() % 3 != 0 || pon.size() % 3 != 0 || kan.size() % 4 != 0 || ankan.size() % 4 != 0 )
-        return false;
-    if ( is_menzen ) {
-        if ( chi.size() > 0 || pon.size() > 0 || kan.size() > 0 )
-            return false;
+/////////////////////////////////////////////////////////////////////////
+// Chi, Pon, Kan
+
+Tile getPrevTile( const Tile &tile ) {
+    if ( tile == invalid_tile || Honor.contains(tile) || tile == _1m || tile == _1p || tile == _1s )
+        return invalid_tile;
+    return tile - 1;
+}
+
+Tile getNextTile( const Tile &tile ) {
+    if ( tile == invalid_tile || Honor.contains(tile) || tile == _9m || tile == _9p || tile == _9s )
+        return invalid_tile;
+    return tile + 1;
+}
+
+bool Hand::canChi(const TileIndex &call) const{
+    Tile tile = call / 4;
+    if ( tile_counts[getPrevTile(tile)] > 0 ) {
+        if ( tile_counts[getPrevTile(getPrevTile(tile))] > 0 )
+            return true;
+        if ( tile_counts[getNextTile(tile)] > 0 )
+            return true;
     } else {
-        if ( chi.size() == 0 && pon.size() == 0 && kan.size() == 0 )
-            return false;
-        for ( int i = 0; i < chi.size(); i += 3 ) {
-            if ( getSuitIndex(chi[i]) != getSuitIndex(chi[i+1]) || getSuitIndex(chi[i]) != getSuitIndex(chi[i+2]) ) return false;
-            if ( getTileValue(chi[i]) + 1 != getTileValue(chi[i+1]) || getTileValue(chi[i]) + 2 != getTileValue(chi[i+2]) ) return false;
-        }
-        for ( int i = 0; i < pon.size(); i += 3 ) {
-            if ( getTileValue(pon[i]) != getTileValue(pon[i+1]) || getTileValue(pon[i]) != getTileValue(pon[i+2]) ) return false;
-        }
-        for ( int i = 0; i < kan.size(); i += 4 ) {
-            if ( getTileValue(kan[i]) != getTileValue(kan[i+1]) || getTileValue(kan[i]) != getTileValue(kan[i+2]) || getTileValue(kan[i]) != getTileValue(kan[i+3]) ) return false;
+        if ( tile_counts[getNextTile(getNextTile(tile))] > 0 )
+            return true;
+    }
+    return false;
+}
+
+bool Hand::canPon(const TileIndex &call) const{
+    return tile_counts[call / 4] >= 2;
+}
+
+bool Hand::canKan(const TileIndex &call) const{
+    return tile_counts[call / 4] == 3;
+}
+
+bool Hand::canAnkan(const TileIndex &tile_index) const{
+    return tile_counts[tile_index / 4] == 3;
+}
+
+bool Hand::callChi(const TileIndex &call, const TileIndex &discard, int opt){
+    return false;
+}
+
+bool Hand::callPon(const TileIndex &call, const TileIndex &discard, int opt){
+    if ( !canPon(call) || discard / 4 == call / 4 ) return false;
+
+    bool is_discarded = false;
+    for ( int i = 0; i < hand.size(); ++i ) {
+        if ( hand[i] == discard ){
+            hand.erase(hand.begin() + i);
+            is_discarded = true;
+            break;
         }
     }
-    for ( int i = 0; i < ankan.size(); i += 4 ) {
-        if ( getTileValue(ankan[i]) != getTileValue(ankan[i+1]) || getTileValue(ankan[i]) != getTileValue(ankan[i+2]) || getTileValue(ankan[i]) != getTileValue(ankan[i+3]) ) return false;
+    if ( !is_discarded ) return false;
+    tile_counts[discard / 4]--;
+
+    Tile tile = call / 4;
+    int tot = 0; 
+    for ( int i = 0; i < hand.size(); ++i ){
+        if ( hand[i] / 4 == tile ){
+            ++tot;
+            open.push_back(hand[i]);
+            hand.erase(hand.begin() + i);
+            --i;
+            if ( tot == 2 ) break;
+        }
     }
-    if ( hand.size() + chi.size() + pon.size() + (kan.size() + ankan.size()) / 4 * 3 != 13 )
-        return false;
+    open_melds.push_back(TileMeld(MeldType::Pon, tile));
+    tile_counts[tile] -= 2;
+    is_menzen = false;
     return true;
 }
 
-int calcKokushiMusoShanten(const TileCounts &counts) {
-    int num_yao = 0; bool has_pair = 0;
-    for ( const auto& i : Yao.list ) {
-        if ( counts[i] >= 2 ) has_pair = true;
-        if ( counts[i] > 0 ) num_yao++;
+bool Hand::callKan(const TileIndex &call){
+    if ( !canKan(call) ) return false;
+    Tile tile = call / 4;
+    int tot = 0;
+    for ( int i = 0; i < hand.size(); ++i ){
+        if ( hand[i] / 4 == tile ){
+            ++tot;
+            open.push_back(hand[i]);
+            hand.erase(hand.begin() + i);
+            --i;
+            if ( tot == 3 ) break;
+        }        
     }
-    int shanten = 12 - num_yao - (has_pair ? 0 : 1);
-    return shanten;
+    open_melds.push_back(TileMeld(MeldType::Minkan, tile));
+    tile_counts[tile] -= 3;
+    is_menzen = false;
+    return true;
 }
 
-int calcChiitoitsuShanten(const TileCounts &counts) {
-    int num_pairs = 0, num_redun = 0;
-    for ( int i = 0; i < 34; ++i ) {
-        if ( counts[i] >= 2 ){
-            ++num_pairs;
-            num_redun += counts[i] - 2;
+bool Hand::performAnkan(const TileIndex &tile_index, const TileIndex &draw){
+    if ( tile_counts[tile_index / 4] != 4 ) return false;
+    Tile tile = tile_index / 4;
+    int tot = 0;
+    for ( int i = 0; i < hand.size(); ++i ){
+        if ( hand[i] / 4 == tile ){
+            ++tot;
+            open.push_back(hand[i]);
+            hand.erase(hand.begin() + i);
+            --i;
+            if ( tot == 4 ) break;
+        }        
+    }
+    open_melds.push_back(TileMeld(MeldType::Ankan, tile));
+    tile_counts[tile] -= 4;
+
+    hand.push_back(draw);
+    tile_counts[draw / 4]++;
+    return true;
+}
+
+bool Hand::drawAndDiscard(const Tile &draw, const Tile &discard){
+    hand.push_back(draw);
+    tile_counts[draw / 4]++;
+
+    bool is_discarded = false;
+    for ( int i = 0; i < hand.size(); ++i ) {
+        if ( hand[i] == discard ){
+            hand.erase(hand.begin() + i);
+            is_discarded = true;
+            break;
         }
     }
-    int shanten = min(6 - num_pairs, num_redun);
-    return shanten;
+    if ( !is_discarded ) return false;
+    tile_counts[discard / 4]--;
+    return true;
 }
 
-// Uncompleted
-int calcStandardShanten(const TileCounts &counts) {
-    TileCounts a = counts;
-    int num = 0; for ( Tile i = 0; i < 34; ++i ) num += a[i];
-    int shanten = 8 - num;
-    for ( Tile i = 0; i < 34; ++i ) {
-        if ( a[i] >= 3 ){
-            a[i] -= 3; shanten = min(shanten, calcStandardShanten(a)); a[i] += 3;
-        }
-        if ( i < 27 && i % 9 < 7 && a[i] >= 1 && a[i + 1] >= 1 && a[i + 2] >= 1 ) {
-            a[i]--; a[i + 1]--; a[i + 2]--; shanten = min(shanten, calcStandardShanten(a)); a[i]++; a[i + 1]++; a[i + 2]++;
-        }
-    }
-    return shanten;
-}
+/////////////////////////////////////////////////////////////////////////
 
-int calcShanten(const TileCounts &counts) {
-    int shanton = min(min(calcChiitoitsuShanten(counts), calcKokushiMusoShanten(counts)), calcStandardShanten(counts));
-    return shanton;
-}
-
-int Hand::calcShanten() const {
-    TileCounts counts = getTileCounts();
-    int shanten = calcStandardShanten(counts);
-    if ( is_menzen ) shanten = min(shanten, min(calcChiitoitsuShanten(counts), calcKokushiMusoShanten(counts)));
-    return shanten;
+bool Hand::isValid() const {
+    return true;
 }

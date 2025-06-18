@@ -6,13 +6,13 @@
 #include <array>
 #include <cassert>
 
-using Tile = int; // 0-136
-using TileType = int; // 0-34
+using Tile = int; // 0-34
+using TileIndex = int; // 0-136
 using TileName = std::string;
-using TileCounts = std::array<int, 34>;
+using TileCounts = std::array<int, 35>;
+using TileIndexList = std::vector<TileIndex>;
+using TileMap = std::array<bool, 35>;
 using TileList = std::vector<Tile>;
-using TileTypeMap = std::array<bool, 34>;
-using TileTypeList = std::vector<TileType>;
 
 enum class Wind { East, South, West, North };
 enum class Yaku { Richii, Tanyao, Tsumo, YakuhaiSelfWind, YakuhaiRoundWind, YakuhaiHaku, YakuhaiHatsu, YakuhaiChun,
@@ -39,23 +39,23 @@ enum class MeldType {
 };
 
 
-const Tile invalid_tile = 136;
-const TileType invalid_tile_type = 34;
+const TileIndex invalid_tile_index = 136;
+const Tile invalid_tile = 34;
 
-TileTypeMap getTileTypeMap( const TileTypeList& list );
+TileMap getTileMap( const TileList& list );
 
 struct TileFamily {
     const int num;
-    const TileTypeList list;
-    const TileTypeMap map;
-    TileFamily(int n, const TileTypeList& l) : num(n), list(l), map(getTileTypeMap(l)) {}
+    const TileList list;
+    const TileMap map;
+    TileFamily(int n, const TileList& l) : num(n), list(l), map(getTileMap(l)) {}
+    bool containsIdx(const TileIndex &tile_index) const;
     bool contains(const Tile &tile) const;
 };
 
 struct TileMeld {
-    MeldType type;
-    TileType tile;
-    TileMeld(MeldType t, TileType tile) : type(t), tile(tile) {}
+    MeldType type; Tile tile;
+    TileMeld(const MeldType &t, const Tile &tile) : type(t), tile(tile) {}
 };
 
 using TileMeldList = std::vector<TileMeld>;
@@ -63,11 +63,14 @@ using HandParseResult = std::vector<TileMeldList>;
 
 class Hand{
 private:
-    TileList hand;
-    TileList chi, pon, kan, ankan;
+    TileIndexList hand;
+    TileIndexList open;
+    TileMeldList open_melds;
     TileCounts tile_counts;
-    bool is_menzen;
     Wind round_wind, seat_wind;
+    int is_menzen, is_richii; 
+    // is_richii = 1 : ippatsu
+    // is_richii > 1 : not ippatsu
 public:
     Hand(const TileList& init_tiles, Wind round, Wind seat);
     void arrangeTiles();
@@ -78,13 +81,6 @@ public:
     Wind getRoundWind() const { return round_wind; }
     Wind getSeatWind() const { return seat_wind; }
     TileCounts getTileCounts() const { return tile_counts; };
-
-    bool isValid() const;
-    HandParseResult parseWinningHand(const Tile &draw) const;
-    YakuList calcYaku(const Tile &drawnTile) const;
-    int calcShanten() const;
-    bool isWinningHand(const Tile &drawnTile) const;
-    int calcHan() const;
 
     bool hasTile(const Tile &tile) const;
     bool canChi(const Tile &call) const;
@@ -97,23 +93,24 @@ public:
     bool performAnkan(const Tile &tile, const Tile &draw);
     bool drawAndDiscard(const Tile &draw, const Tile &discard);
 
-    // 1 Han
+    bool isValid() const;
+    HandParseResult parseWinningHand(const Tile &draw) const;
+    YakuList calcYaku(const Tile &drawnTile) const;
+    int calcShanten() const;
+    bool isWinningHand(const Tile &drawnTile) const;
+    int calcHan() const;
+
     bool isTanyao(const Tile &draw) const;
     bool isYakuhaiSelfWind(const Tile &draw) const;
     bool isYakuhaiRoundWind(const Tile &draw) const;
     bool isYakuhaiHaku(const Tile &draw) const;
     bool isYakuhaiHatsu(const Tile &draw) const;
     bool isYakuhaiChun(const Tile &draw) const;
-    // 2 Han
     bool isSankantsu(const Tile &draw) const;
     bool isHonroutou(const Tile &draw) const;
     bool isChiitoitsu(const Tile &draw) const;
-    // 2 Han, Fuuro -1
-    // 3 Han
     bool isHonitsu(const Tile &draw) const;
-    // 6 Han, Fuuro -1
     bool isChinitsu(const Tile &draw) const;
-    // Yakuman
     bool isDaisangen(const Tile &draw) const;
     bool isSuuankou(const Tile &draw) const;
     bool isTsuuiisou(const Tile &draw) const;
@@ -123,7 +120,6 @@ public:
     bool isShousuushii(const Tile &draw) const;
     bool isSuukantsu(const Tile &draw) const;
     bool isChuuren(const Tile &draw) const;
-    // Double Yakuman
     bool isSuuankouTanki(const Tile &draw) const;
     bool isKokushiMusoJusanmen(const Tile &draw) const;
     bool isJunseiChuuren(const Tile &draw) const;
