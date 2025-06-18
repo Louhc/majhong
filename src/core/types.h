@@ -13,16 +13,18 @@ using TileCounts = std::array<int, 34>;
 using TileList = std::vector<Tile>;
 using TileTypeMap = std::array<bool, 34>;
 using TileTypeList = std::vector<TileType>;
+
 enum class Wind { East, South, West, North };
-enum class Yaku { Tanyao, YakuhaiSelfWind, YakuhaiRoundWind, YakuhaiHaku, YakuhaiHatsu, YakuhaiChun,
-                Pinfu, Iipeikou, SanshokuDoukou, Sankantsu, Toitoi, Sanankou, Shousangen,
-                Honroutou, Chiitoitsu, Honchan, Ittsuu, Sanshoku,
-                Ryanpeikou, Junchan, Honitsu,
-                Chinitsu,
-                Daisangen, Suuankou, Tsuuiisou, Ryuuisou, Chinroutou,
-                KokushiMuso, Shousuushii, Suukantsu, Chuuren,
-                SuuankouTanki, KokushiMusoJusanmen, JunseiChuuren,
-                Daisuushii };
+enum class Yaku { Richii, Tanyao, Tsumo, YakuhaiSelfWind, YakuhaiRoundWind, YakuhaiHaku, YakuhaiHatsu, YakuhaiChun,
+                Pinfu, Iipeikou, Chankan, Rinshan, Haitei, Houtei, Ippatsu, // 1 han
+                DoubleRichii, SanshokuDoukou, Sankantsu, Toitoi, Sanankou, Shousangen, Honroutou, Chiitoitsu, // 2 han
+                Honchan, Ittsuu, Sanshoku, // 2 han - 1
+                Ryanpeikou, // 3 han
+                Junchan, Honitsu, // 3 han - 1
+                Chinitsu, // 6 han - 1
+                Daisangen, Suuankou, Tsuuiisou, Ryuuisou, Chinroutou, KokushiMuso, Shousuushii, Suukantsu, Chuuren, 
+                SuuankouTanki, KokushiMusoJusanmen, JunseiChuuren, Daisuushii // Yakuman
+};
 using YakuList = std::vector<Yaku>;
 
 enum class MeldType {
