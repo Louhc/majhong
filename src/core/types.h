@@ -82,18 +82,17 @@ public:
     Wind getSeatWind() const { return seat_wind; }
     TileCounts getTileCounts() const { return tile_counts; };
 
-    bool hasTile(const Tile &tile) const;
-    bool canChi(const Tile &call) const;
-    bool canPon(const Tile &call) const;
-    bool canKan(const Tile &call) const;
-    bool canAnkan(const Tile &tile) const;
-    bool callChi(const Tile &call, const Tile &discard, int opt);
-    bool callPon(const Tile &call, const Tile &discard, int opt);
-    bool callKan(const Tile &call);
-    bool performAnkan(const Tile &tile, const Tile &draw);
-    bool drawAndDiscard(const Tile &draw, const Tile &discard);
+    bool canChi(const TileIndex &call) const;
+    bool canPon(const TileIndex &call) const;
+    bool canKan(const TileIndex &call) const;
+    bool canAnkan(const TileIndex &tile_index) const;
+    bool callChi(const TileIndex &call, const TileIndex &discard, int opt);
+    bool callPon(const TileIndex &call, const TileIndex &discard, int opt);
+    bool callKan(const TileIndex &call);
+    bool performAnkan(const TileIndex &tile_index);
+    bool performChakan(const TileIndex &tile_index);
+    bool drawAndDiscard(const TileIndex &draw, const TileIndex &discard);
 
-    bool isValid() const;
     HandParseResult parseWinningHand(const Tile &draw) const;
     YakuList calcYaku(const Tile &drawnTile) const;
     int calcShanten() const;

@@ -82,78 +82,96 @@ bool Hand::canAnkan(const TileIndex &tile_index) const{
     return tile_counts[tile_index / 4] == 3;
 }
 
-bool Hand::callChi(const TileIndex &call, const TileIndex &discard, int opt){
-    return false;
+TileIndexList::iterator findByTileIndex( TileIndexList &hand, const TileIndex &tile_index ){
+    for ( int i = 0; i < hand.size(); ++i ) {
+        if ( hand[i] == tile_index ) return hand.begin() + i;
+    }
+    return hand.end();
 }
 
-bool Hand::callPon(const TileIndex &call, const TileIndex &discard, int opt){
-    if ( !canPon(call) || discard / 4 == call / 4 ) return false;
-
-    bool is_discarded = false;
+TileIndexList::iterator findByTile( TileIndexList &hand, const Tile &tile, bool is_red_dragon = false ){
     for ( int i = 0; i < hand.size(); ++i ) {
-        if ( hand[i] == discard ){
-            hand.erase(hand.begin() + i);
-            is_discarded = true;
-            break;
-        }
+        if ( hand[i] / 4 == tile && (!is_red_dragon || !Five.contains(tile) || hand[i] % 4 == 0) ) return hand.begin() + i;
     }
-    if ( !is_discarded ) return false;
-    tile_counts[discard / 4]--;
+    return hand.end();
+}
 
-    Tile tile = call / 4;
-    int tot = 0; 
-    for ( int i = 0; i < hand.size(); ++i ){
-        if ( hand[i] / 4 == tile ){
-            ++tot;
-            open.push_back(hand[i]);
-            hand.erase(hand.begin() + i);
-            --i;
-            if ( tot == 2 ) break;
-        }
-    }
-    open_melds.push_back(TileMeld(MeldType::Pon, tile));
-    tile_counts[tile] -= 2;
+bool Hand::callChi(const TileIndex &call, const TileIndex &discard, int opt){
+    Tile t0 = call / 4, t1, t2;
+    if ( opt % 3 == 0 ) t1 = getPrevTile(call), t2 = getPrevTile(t1);
+    else if ( opt % 3 == 1 ) t1 = getPrevTile(call), t2 = getNextTile(call);
+    else if ( opt % 3 == 2 ) t1 == getNextTile(call), t2 = getNextTile(t1);
+    auto it1 = findByTile(hand, t1, opt > 2 && Five.contains(t1)); assert(it1 != hand.end());
+    open.push_back(*it1); hand.erase(it1); tile_counts[t1]--;
+    auto it2 = findByTile(hand, t2, opt > 2 && Five.contains(t2)); assert(it2 != hand.end());
+    open.push_back(*it2); hand.erase(it2); tile_counts[t2]--;
+    open.push_back(call);
+
+    auto it = findByTileIndex(hand, discard); assert(it != hand.end());
+    hand.erase(it); tile_counts[discard / 4]--;
+
+    if ( opt == 2 ) open_melds.push_back(TileMeld(MeldType::Chi, t0));
+    else open_melds.push_back(TileMeld(MeldType::Chi, t1));
     is_menzen = false;
+
+    return true;
+}
+
+bool Hand::callPon(const TileIndex &call, const TileIndex &discard, int opt = 0){
+    Tile tile = call / 4;
+    auto it1 = findByTile(hand, tile, opt == 1); assert(it1 != hand.end());
+    open.push_back(*it1); hand.erase(it1); tile_counts[tile]--;
+    auto it2 = findByTile(hand, tile); assert(it2 != hand.end());
+    open.push_back(*it2); hand.erase(it2); tile_counts[tile]--;
+    open.push_back(call);
+    
+    auto it = findByTileIndex(hand, discard); assert(it != hand.end());
+    hand.erase(it); tile_counts[discard / 4]--;
+
+    open_melds.push_back(TileMeld(MeldType::Pon, tile));
+    is_menzen = false;
+
     return true;
 }
 
 bool Hand::callKan(const TileIndex &call){
-    if ( !canKan(call) ) return false;
     Tile tile = call / 4;
-    int tot = 0;
-    for ( int i = 0; i < hand.size(); ++i ){
-        if ( hand[i] / 4 == tile ){
-            ++tot;
-            open.push_back(hand[i]);
-            hand.erase(hand.begin() + i);
-            --i;
-            if ( tot == 3 ) break;
-        }        
+    for ( int i = 0; i < 3; ++i ){
+        auto it = findByTile(hand, tile); assert(it != hand.end());
+        open.push_back(*it); hand.erase(it); tile_counts[tile]--;
     }
+    open.push_back(call);
+
     open_melds.push_back(TileMeld(MeldType::Minkan, tile));
-    tile_counts[tile] -= 3;
     is_menzen = false;
+
     return true;
 }
 
-bool Hand::performAnkan(const TileIndex &tile_index, const TileIndex &draw){
-    if ( tile_counts[tile_index / 4] != 4 ) return false;
+bool Hand::performAnkan(const TileIndex &tile_index){
     Tile tile = tile_index / 4;
-    int tot = 0;
-    for ( int i = 0; i < hand.size(); ++i ){
-        if ( hand[i] / 4 == tile ){
-            ++tot;
-            open.push_back(hand[i]);
-            hand.erase(hand.begin() + i);
-            --i;
-            if ( tot == 4 ) break;
-        }        
+    for ( int i = 0; i < 3; ++i ){
+        auto it = findByTile(hand, tile); assert(it != hand.end());
+        open.push_back(*it); hand.erase(it); tile_counts[tile]--;
     }
-    open_melds.push_back(TileMeld(MeldType::Ankan, tile));
-    tile_counts[tile] -= 4;
+    open.push_back(tile_index);
 
-    hand.push_back(draw);
-    tile_counts[draw / 4]++;
+    open_melds.push_back(TileMeld(MeldType::Ankan, tile));
+
+    return true;
+}
+
+bool Hand::performChakan(const TileIndex &tile_index){
+    Tile tile = tile_index / 4; bool is_found = false;
+    for ( int i = 0; i < open_melds.size(); ++i ){
+        if ( open_melds[i].type == MeldType::Pon && open_melds[i].tile == tile ){
+            open_melds[i].type = MeldType::Chakan; is_found = true;
+            break;
+        }
+    }
+    assert(is_found);
+    open.push_back(tile_index);
+
     return true;
 }
 
@@ -161,21 +179,10 @@ bool Hand::drawAndDiscard(const Tile &draw, const Tile &discard){
     hand.push_back(draw);
     tile_counts[draw / 4]++;
 
-    bool is_discarded = false;
-    for ( int i = 0; i < hand.size(); ++i ) {
-        if ( hand[i] == discard ){
-            hand.erase(hand.begin() + i);
-            is_discarded = true;
-            break;
-        }
-    }
-    if ( !is_discarded ) return false;
-    tile_counts[discard / 4]--;
+    auto it = findByTile(hand, discard); assert(it != hand.end());
+    hand.erase(it); tile_counts[discard / 4]--;
+    
     return true;
 }
 
 /////////////////////////////////////////////////////////////////////////
-
-bool Hand::isValid() const {
-    return true;
-}
