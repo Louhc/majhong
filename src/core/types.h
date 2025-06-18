@@ -93,10 +93,10 @@ public:
     bool performChakan(const TileIndex &tile_index);
     bool drawAndDiscard(const TileIndex &draw, const TileIndex &discard);
 
-    HandParseResult parseWinningHand(const Tile &draw) const;
-    YakuList calcYaku(const Tile &drawnTile) const;
+    HandParseResult parseWinningHand(const TileIndex &draw) const;
+    YakuList calcYaku(const TileIndex &draw) const;
     int calcShanten() const;
-    bool isWinningHand(const Tile &drawnTile) const;
+    bool isWinningHand(const TileIndex &draw) const;
     int calcHan() const;
 
     bool isTanyao(const TileIndex &draw) const;
