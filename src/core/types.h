@@ -94,7 +94,7 @@ public:
     bool drawAndDiscard(const TileIndex &draw, const TileIndex &discard);
 
     HandParseResult parseWinningHand(const TileIndex &draw) const;
-    YakuList calcYaku(const TileIndex &draw) const;
+    YakuList calcYaku(const TileIndex &draw, const bool &is_tsumo) const;
     int calcShanten() const;
     bool isWinningHand(const TileIndex &draw) const;
     int calcHan() const;
@@ -111,7 +111,7 @@ public:
     bool isHonitsu(const TileIndex &draw) const;
     bool isChinitsu(const TileIndex &draw) const;
     bool isDaisangen(const TileIndex &draw) const;
-    bool isSuuankou(const TileIndex &draw) const;
+    bool isSuuankou(const TileIndex &draw, const bool &is_tsumo) const;
     bool isTsuuiisou(const TileIndex &draw) const;
     bool isRyuuisou(const TileIndex &draw) const;
     bool isChinroutou(const TileIndex &draw) const;

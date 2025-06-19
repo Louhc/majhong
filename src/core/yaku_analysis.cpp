@@ -93,11 +93,11 @@ int calcHan( const YakuList &yaku_list, const bool &is_fuuro ){
     return han;
 }
 
-YakuList Hand::calcYaku(const TileIndex &draw) const{
+YakuList Hand::calcYaku(const TileIndex &draw, const bool &is_tsumo) const{
     YakuList yaku_list; int max_han = 0;
 
     if ( isDaisangen(draw) ) yaku_list.push_back(Yaku::Daisangen);
-    if ( isSuuankou(draw) ) yaku_list.push_back(Yaku::Suuankou);
+    if ( isSuuankou(draw, is_tsumo) ) yaku_list.push_back(Yaku::Suuankou);
     if ( isTsuuiisou(draw) ) yaku_list.push_back(Yaku::Tsuuiisou);
     if ( isRyuuisou(draw) ) yaku_list.push_back(Yaku::Ryuuisou);
     if ( isChinroutou(draw) ) yaku_list.push_back(Yaku::Chinroutou);
@@ -135,6 +135,9 @@ YakuList Hand::calcYaku(const TileIndex &draw) const{
         YakuList meld_yaku;
 
         if ( is_menzen ){
+            if ( is_tsumo ){
+                meld_yaku.push_back(Yaku::Tsumo);
+            }
             if ( melds[1].type == MeldType::ClosedSequence &&
                  melds[2].type == MeldType::ClosedSequence &&
                  melds[3].type == MeldType::ClosedSequence &&
@@ -376,9 +379,8 @@ bool Hand::isDaisangen(const TileIndex &draw) const{
     } return true;
 }
 
-// Unable to check if it's zimo
-bool Hand::isSuuankou(const TileIndex &draw) const{
-    if ( !is_menzen ) return false;
+bool Hand::isSuuankou(const TileIndex &draw, const bool &is_tsumo) const{
+    if ( !is_menzen || !is_tsumo ) return false;
     int ankou_num = 0, pair_num = 0;
     for ( int i = 0; i < open_melds.size(); ++i )
         if ( open_melds[i].type == MeldType::Ankan )
