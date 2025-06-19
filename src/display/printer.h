@@ -11,14 +11,14 @@
 #include "tiles.h" // 包含 getTileName 等 Tile 相关函数喵
 
 // 打印单个 Tile 的名称（例如 "1m", "5p", "东"）喵
-void printTile(const Tile& tile);
+void printTileIndex(const TileIndex& tile_index);
 
 // 打印单个 TileType 的名称喵
 // (通常 TileType 需要转换为 TileName 才能有意义地打印)喵
-void printTileType(const TileType& tile_type);
+void printTile(const Tile& tile);
 
 // 打印 TileList (即 std::vector<Tile>) 中的所有牌喵
-void printTileList(const TileList& tile_list);
+void printHand(const TileIndexList& hand);
 
 // 打印 TileCounts (即 std::array<int, 34>) 中的牌型计数喵
 void printTileCounts(const TileCounts& tile_counts);

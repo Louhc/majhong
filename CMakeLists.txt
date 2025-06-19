@@ -13,7 +13,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)      # 禁用 GNU 扩展 保持代码更可移植�
 # 设置一个变量来存储所有源代码目录喵
 # 这样可以方便地管理 include 路径和源文件查找喵
 set(PROJECT_SOURCE_DIRS
-    src/core
+    src/hand
     src/game
     src/display
 )
@@ -32,7 +32,7 @@ set(MAIN_SOURCE ${MAIN_SOURCE_DIR}/main.cpp) # 假设主程序入口是 src/main
 
 # 递归查找所有非测试相关的源文件喵
 file(GLOB_RECURSE GAME_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/hand/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/game/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/display/*.cpp"
 )

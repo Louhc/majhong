@@ -9,18 +9,18 @@
 
 class Player {
 private:
-    Hand hand; // 1m-9m, 1p-9p, 1s-9s, 1z-7z
+    Hand *hand; // 1m-9m, 1p-9p, 1s-9s, 1z-7z
     Table *table;
 public:
     Player();
     ~Player();
 
-    bool canDiscard( const Tile &tile );
-    bool canChi( const Tile &tile );
-    bool canPon( const Tile &tile );
-    bool canKan( const Tile &tile );
-    bool canAnKan( const Tile &tile );
-    bool canWin(const Tile &tile);
+    bool canDiscard( const Tile &tile ) const;
+    bool canChi( const Tile &tile ) const;
+    bool canPon( const Tile &tile ) const;
+    bool canKan( const Tile &tile ) const;
+    bool canAnKan( const Tile &tile ) const;
+    bool canWin(const Tile &tile) const;
 
     virtual int handleDraw( const Tile &tile );
     virtual int handleLeftPlayerDiscard( const Tile &tile );

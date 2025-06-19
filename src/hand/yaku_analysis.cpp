@@ -5,6 +5,16 @@
 #include "constants.h"
 #include "tiles.h"
 
+Tile getTileFromWind(const Wind &wind) {
+    switch (wind) {
+        case Wind::East: return EastWind;
+        case Wind::South: return SouthWind;
+        case Wind::West: return WestWind;
+        case Wind::North: return NorthWind;
+        default: return invalid_tile; // Invalid wind
+    }
+}
+
 bool backtrackParse( TileCounts current_counts, TileMeldList current_melds,
         HandParseResult& all_results, bool is_pair_found, int enumerator = 0 ){
     int sum = 0;
@@ -277,16 +287,6 @@ bool Hand::isTanyao(const TileIndex &draw) const{
     for ( const Tile &tile : Yao.list )
         if ( tile_counts[tile] > 0) return false;
     return true;
-}
-
-Tile getTileFromWind(const Wind &wind) {
-    switch (wind) {
-        case Wind::East: return EastWind;
-        case Wind::South: return SouthWind;
-        case Wind::West: return WestWind;
-        case Wind::North: return NorthWind;
-        default: return invalid_tile; // Invalid wind
-    }
 }
 
 bool Hand::isYakuhaiSelfWind(const TileIndex &draw) const{
