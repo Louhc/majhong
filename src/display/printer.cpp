@@ -1,31 +1,31 @@
 #include "printer.h"
 
+void printTileIndex(const TileIndex& tile_index) {
+    std::cout << getTileName(tile_index) << " ";
+}
+
 void printTile(const Tile& tile) {
-    std::cout << getTileName(tile) << " ";
+    std::cout << getTileName(tile * 4 + 1) << " ";
 }
 
-void printTileType(const TileType& tile_type) {
-    std::cout << getTileName(tile_type * 4 + 1) << " ";
-}
-
-void printTileList(const TileList& tile_list) {
-    for (const Tile& tile : tile_list) {
-        printTile(tile);
+void printHand(const TileIndexList& hand) {
+    for (const TileIndex& tile_index : hand) {
+        printTileIndex(tile_index);
     }
 }
 
 void printMeldType(const MeldType& meld_type) {
     std::cout << "<";
     switch (meld_type) {
-        case MeldType::Ankan:          std::cout << "      Ankan    "; break;
-        case MeldType::Minkan:         std::cout << "     Minkan    "; break;
-        case MeldType::Chakan:         std::cout << "     Chakan    "; break;
-        case MeldType::Chi:            std::cout << "       Chi     "; break;
-        case MeldType::Pon:            std::cout << "       Pon     "; break;
+        case MeldType::Ankan:          std::cout << "Ankan"; break;
+        case MeldType::Minkan:         std::cout << "Minkan"; break;
+        case MeldType::Chakan:         std::cout << "Chakan"; break;
+        case MeldType::Chi:            std::cout << "Chi"; break;
+        case MeldType::Pon:            std::cout << "Pon"; break;
         case MeldType::ClosedSequence: std::cout << "Closed Sequence"; break;
-        case MeldType::ClosedTriplet:  std::cout << "Closed Triplet "; break;
-        case MeldType::Pair:           std::cout << "      Pair     "; break;
-        default:                       std::cout << " Unknown Type  ";
+        case MeldType::ClosedTriplet:  std::cout << "Closed Triplet"; break;
+        case MeldType::Pair:           std::cout << "Pair"; break;
+        default:                       std::cout << "Unknown";
     }
     std::cout << ">";
 }
