@@ -2,6 +2,5 @@
 
 ## TODO LIST
 
-- [ ] ALL Yaku Judgement Logic
-- [ ] Pingfu Judgement Logic (too troublesome)
-- [ ] Iipeikou Judgement Logic
+- [ ] Refactor the type `Tile` and `TileIndex`. Change it to an `enum`.
+- [ ] The test for Yaku Calculation.
