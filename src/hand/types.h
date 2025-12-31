@@ -61,6 +61,20 @@ struct TileMeld {
 using TileMeldList = std::vector<TileMeld>;
 using HandParseResult = std::vector<TileMeldList>;
 
+// 和牌时的游戏状态标志
+struct AgariFlags {
+    bool is_tsumo = false;      // 自摸
+    bool is_riichi = false;     // 立直
+    bool is_double_riichi = false; // 两立直
+    bool is_ippatsu = false;    // 一发
+    bool is_rinshan = false;    // 岭上开花
+    bool is_chankan = false;    // 抢杠
+    bool is_haitei = false;     // 海底摸月
+    bool is_houtei = false;     // 河底捞鱼
+    bool is_tenhou = false;     // 天和
+    bool is_chihou = false;     // 地和
+};
+
 class Hand{
 private:
     TileIndexList hand;
@@ -68,9 +82,10 @@ private:
     TileMeldList open_melds;
     TileCounts tile_counts;
     Wind round_wind, seat_wind;
-    int is_menzen, is_richii; 
-    // is_richii = 1 : ippatsu
-    // is_richii > 1 : not ippatsu
+    int is_menzen, is_richii;
+    // is_richii = 0 : 未立直
+    // is_richii = 1 : 立直中 (一发有效)
+    // is_richii > 1 : 立直中 (一发无效)
 public:
     Hand(const TileList& init_tiles, Wind round, Wind seat);
     void arrangeTiles();
@@ -78,9 +93,16 @@ public:
     TileCounts getAllTileCounts() const;
 
     bool isMenzen() const { return is_menzen; }
+    bool isRiichi() const { return is_richii > 0; }
+    bool isIppatsu() const { return is_richii == 1; }
     Wind getRoundWind() const { return round_wind; }
     Wind getSeatWind() const { return seat_wind; }
     TileCounts getTileCounts() const { return tile_counts; };
+
+    // 立直相关
+    void declareRiichi() { if (is_menzen) is_richii = 1; }
+    void consumeIppatsu() { if (is_richii == 1) is_richii = 2; }
+    void breakIppatsu() { if (is_richii == 1) is_richii = 2; }  // 他家副露后一发失效
 
     bool canChi(const TileIndex &call) const;
     bool canPon(const TileIndex &call) const;
@@ -95,6 +117,7 @@ public:
 
     HandParseResult parseWinningHand(const TileIndex &draw) const;
     YakuList calcYaku(const TileIndex &draw, const bool &is_tsumo) const;
+    YakuList calcYaku(const TileIndex &draw, const AgariFlags &flags) const;  // 新增：支持完整状态标志
     int calcShanten() const;
     bool isWinningHand(const TileIndex &draw) const;
     int calcHan() const;
@@ -123,6 +146,10 @@ public:
     bool isKokushiMusoJusanmen(const TileIndex &draw) const;
     bool isJunseiChuuren(const TileIndex &draw) const;
     bool isDaisuushii(const TileIndex &draw) const;
+
+    // 完整得点计算
+    int calcFu(const TileMeldList& melds, const TileIndex& draw, bool is_tsumo) const;
+    TileMeldList getBestMelds(const TileIndex& draw) const;
 };
 
 #endif // TYPES_H

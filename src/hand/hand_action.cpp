@@ -100,7 +100,7 @@ bool Hand::callChi(const TileIndex &call, const TileIndex &discard, int opt){
     Tile t0 = call / 4, t1, t2;
     if ( opt % 3 == 0 ) t1 = getPrevTile(call), t2 = getPrevTile(t1);
     else if ( opt % 3 == 1 ) t1 = getPrevTile(call), t2 = getNextTile(call);
-    else if ( opt % 3 == 2 ) t1 == getNextTile(call), t2 = getNextTile(t1);
+    else if ( opt % 3 == 2 ) t1 = getNextTile(call), t2 = getNextTile(t1);
     auto it1 = findByTile(hand, t1, opt > 2 && Five.contains(t1)); assert(it1 != hand.end());
     open.push_back(*it1); hand.erase(it1); tile_counts[t1]--;
     auto it2 = findByTile(hand, t2, opt > 2 && Five.contains(t2)); assert(it2 != hand.end());

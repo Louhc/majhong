@@ -16,6 +16,7 @@ set(PROJECT_SOURCE_DIRS
     src/hand
     src/game
     src/display
+    src/network
 )
 
 # 添加所有头文件目录喵
@@ -35,7 +36,11 @@ file(GLOB_RECURSE GAME_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hand/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/game/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/display/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/network/*.cpp"
 )
+
+# 保存库源文件列表（不包含main.cpp），用于测试
+set(LIB_SOURCES ${GAME_SOURCES})
 
 # 添加主程序的源文件到列表喵
 list(APPEND GAME_SOURCES ${MAIN_SOURCE})
@@ -57,7 +62,7 @@ foreach(TEST_FILE ${TEST_FILES})
     get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE) # 例如：test_hand
     
     # 为每个测试创建可执行文件喵
-    add_executable(${TEST_NAME} ${TEST_FILE} ${GAME_SOURCES}) # 注意：这里为了简单 测试也链接了所有游戏源码。更精细的做法是只链接测试需要的模块喵。
+    add_executable(${TEST_NAME} ${TEST_FILE} ${LIB_SOURCES}) # 使用LIB_SOURCES而不是GAME_SOURCES，避免重复main函数
     
     # 添加测试到 CTest喵
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
